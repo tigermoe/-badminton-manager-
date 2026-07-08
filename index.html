@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Ứng dụng Quản lý & Điểm danh thành viên chơi Cầu lông - Hiện đại, dễ dùng trên mọi thiết bị." />
+  <title>🏸 Cầu Lông Manager</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <!-- ===== HEADER ===== -->
+  <header class="app-header">
+    <div class="header-inner">
+      <div class="header-brand">
+        <span class="brand-icon">🏸</span>
+        <div>
+          <h1 class="brand-title">Cầu Lông Manager</h1>
+          <p class="brand-sub" id="session-date"></p>
+        </div>
+      </div>
+      <div class="header-actions">
+        <button class="btn btn-quick" id="btn-quick-add" title="Thêm nhanh từ danh sách">
+          <span>📋 Thêm nhanh</span>
+        </button>
+        <button class="btn btn-outline" id="btn-add-member" title="Thêm 1 thành viên">
+          <span>＋ Thêm 1</span>
+        </button>
+        <button class="btn btn-ghost icon-btn" id="btn-reset" title="Đặt lại buổi chơi">
+          🔄
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ===== STATS BAR ===== -->
+  <section class="stats-bar" id="stats-bar">
+    <div class="stat-card" id="stat-total">
+      <span class="stat-icon">👥</span>
+      <div>
+        <div class="stat-value" id="stat-total-val">0</div>
+        <div class="stat-label">Tổng thành viên</div>
+      </div>
+    </div>
+    <div class="stat-card accent-green" id="stat-present">
+      <span class="stat-icon">✅</span>
+      <div>
+        <div class="stat-value" id="stat-present-val">0</div>
+        <div class="stat-label">Đã đến</div>
+      </div>
+    </div>
+    <div class="stat-card accent-blue" id="stat-sets">
+      <span class="stat-icon">🏆</span>
+      <div>
+        <div class="stat-value" id="stat-sets-val">0</div>
+        <div class="stat-label">Tổng set</div>
+      </div>
+    </div>
+    <div class="stat-card accent-yellow" id="stat-unpaid">
+      <span class="stat-icon">💳</span>
+      <div>
+        <div class="stat-value" id="stat-unpaid-val">0</div>
+        <div class="stat-label">Chưa thanh toán</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== FILTER BAR ===== -->
+  <section class="filter-bar">
+    <div class="filter-group">
+      <span class="filter-label">Lọc:</span>
+      <div class="filter-chips" id="filter-chips">
+        <button class="chip active" data-filter="all">Tất cả</button>
+        <button class="chip" data-filter="present">✅ Đã đến</button>
+        <button class="chip" data-filter="absent">🔴 Chưa đến</button>
+        <button class="chip" data-filter="unpaid">💳 Chưa TT</button>
+        <button class="chip" data-filter="beginner">🟢 Mới chơi</button>
+        <button class="chip" data-filter="medium">🔵 Trung bình</button>
+        <button class="chip" data-filter="good">🟠 Khá</button>
+        <button class="chip" data-filter="excellent">🔴 Tốt</button>
+      </div>
+    </div>
+    <div class="search-wrap">
+      <span class="search-icon">🔍</span>
+      <input type="text" id="search-input" class="search-input" placeholder="Tìm thành viên…" />
+    </div>
+  </section>
+
+  <!-- ===== MAIN TABLE ===== -->
+  <main class="table-container">
+    <div class="table-scroll">
+      <table class="member-table" id="member-table">
+        <thead>
+          <tr>
+            <th class="col-name">Tên thành viên</th>
+            <th class="col-level">Trình độ</th>
+            <th class="col-attend">Điểm danh</th>
+            <th class="col-sets">Set cầu</th>
+            <th class="col-total">Tổng set</th>
+            <th class="col-payment">Thanh toán</th>
+            <th class="col-action"></th>
+          </tr>
+        </thead>
+        <tbody id="member-tbody">
+          <!-- rows injected by JS -->
+        </tbody>
+        <tfoot>
+          <tr class="table-footer" id="table-footer">
+            <td colspan="2" class="footer-label">📊 Tổng kết buổi</td>
+            <td class="footer-present"><span id="footer-present">0</span> người</td>
+            <td class="footer-sets-label">Tổng set:</td>
+            <td class="footer-sets"><span id="footer-sets">0</span></td>
+            <td class="footer-payment"><span id="footer-unpaid">0</span> chưa TT</td>
+            <td></td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+  </main>
+
+  <!-- ===== ADD MEMBER MODAL ===== -->
+  <div class="modal-overlay" id="modal-overlay" aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+      <div class="modal-header">
+        <h2 class="modal-title" id="modal-title">➕ Thêm thành viên mới</h2>
+        <button class="modal-close" id="modal-close" aria-label="Đóng">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label for="input-name">Họ tên / Biệt danh</label>
+          <input type="text" id="input-name" class="form-control" placeholder="VD: Nguyễn Văn A" />
+        </div>
+        <div class="form-group">
+          <label for="input-level">Trình độ</label>
+          <select id="input-level" class="form-control">
+            <option value="beginner">🟢 Mới chơi</option>
+            <option value="medium" selected>🔵 Trung bình</option>
+            <option value="good">🟠 Khá</option>
+            <option value="excellent">🔴 Tốt</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="input-sets">Số set tối đa hiển thị</label>
+          <input type="number" id="input-sets" class="form-control" value="6" min="1" max="20" />
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" id="modal-cancel">Huỷ</button>
+        <button class="btn btn-primary" id="modal-confirm">✅ Thêm thành viên</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== QUICK ADD MODAL ===== -->
+  <div class="modal-overlay" id="quick-modal-overlay" aria-hidden="true">
+    <div class="modal modal-lg" role="dialog" aria-modal="true" aria-labelledby="quick-modal-title">
+      <div class="modal-header">
+        <h2 class="modal-title" id="quick-modal-title">📋 Thêm nhanh từ danh sách</h2>
+        <button class="modal-close" id="quick-modal-close" aria-label="Đóng">✕</button>
+      </div>
+      <div class="modal-body">
+        <p class="quick-hint">Điền danh sách thành viên — mỗi người một dòng. Chọn trình độ cho từng người ngay trong bảng.</p>
+
+        <div class="quick-input-wrap">
+          <div class="form-group">
+            <label for="quick-textarea">📝 Danh sách tên (mỗi tên 1 dòng)</label>
+            <textarea id="quick-textarea" class="form-control quick-textarea"
+              placeholder="Nguyễn Văn A&#10;Trần Thị B&#10;Lê Minh C&#10;..."
+              rows="6"></textarea>
+          </div>
+          <div class="quick-defaults">
+            <div class="form-group">
+              <label for="quick-default-level">🎯 Trình độ mặc định</label>
+              <select id="quick-default-level" class="form-control">
+                <option value="beginner">🟢 Mới chơi</option>
+                <option value="medium" selected>🔵 Trung bình</option>
+                <option value="good">🟠 Khá</option>
+                <option value="excellent">🔴 Tốt</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="quick-default-sets">🏸 Số set mặc định</label>
+              <input type="number" id="quick-default-sets" class="form-control" value="6" min="1" max="20" />
+            </div>
+            <button class="btn btn-outline btn-sm" id="quick-parse-btn">👁 Xem trước danh sách</button>
+          </div>
+        </div>
+
+        <!-- Preview table -->
+        <div id="quick-preview-wrap" class="quick-preview-wrap" style="display:none;">
+          <div class="quick-preview-header">
+            <span id="quick-preview-count" class="preview-count"></span>
+            <button class="btn btn-ghost btn-sm" id="quick-select-all">☑ Chọn tất cả</button>
+          </div>
+          <div class="quick-preview-scroll">
+            <table class="quick-preview-table" id="quick-preview-table">
+              <thead>
+                <tr>
+                  <th style="width:36px">✓</th>
+                  <th>Tên thành viên</th>
+                  <th>Trình độ</th>
+                  <th style="width:60px">Trạng thái</th>
+                </tr>
+              </thead>
+              <tbody id="quick-preview-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" id="quick-modal-cancel">Huỷ</button>
+        <button class="btn btn-primary" id="quick-modal-confirm" disabled>✅ Thêm <span id="quick-confirm-count">0</span> thành viên</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== CONFIRM RESET MODAL ===== -->
+  <div class="modal-overlay" id="reset-modal-overlay" aria-hidden="true">
+    <div class="modal modal-sm" role="dialog" aria-modal="true">
+      <div class="modal-header">
+        <h2 class="modal-title">🔄 Đặt lại buổi chơi</h2>
+        <button class="modal-close" id="reset-modal-close">✕</button>
+      </div>
+      <div class="modal-body">
+        <p style="color:var(--text-secondary);line-height:1.6;">Thao tác này sẽ <strong>xoá toàn bộ điểm danh, set cầu và thanh toán</strong> của mọi thành viên trong buổi hôm nay. Bạn có chắc không?</p>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" id="reset-cancel">Huỷ</button>
+        <button class="btn btn-danger" id="reset-confirm">🔄 Đặt lại ngay</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== TOAST ===== -->
+  <div class="toast-container" id="toast-container"></div>
+
+  <script src="app.js"></script>
+</body>
+</html>
