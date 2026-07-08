@@ -64,18 +64,9 @@ function load() {
     save();
   }
 
-  // Auto-insert Quang Long for sync testing
-  if (Array.isArray(members) && !members.some(m => m.name === 'Quang Long')) {
-    members.push({
-      id: uid(),
-      name: 'Quang Long',
-      gender: 'nam',
-      level: 'yeu_plus',
-      present: true,
-      sets: [],
-      maxSets: 6,
-      payment: 'unpaid'
-    });
+  // Clean up Quang Long from localStorage
+  if (Array.isArray(members)) {
+    members = members.filter(m => m.name !== 'Quang Long');
     save();
   }
 
