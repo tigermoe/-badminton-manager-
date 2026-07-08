@@ -23,16 +23,16 @@
   --red-500:   #ef4444;
 
   /* Surface */
-  --bg-base:   #0f172a;
-  --bg-card:   #1e293b;
-  --bg-card2:  #263347;
-  --bg-glass:  rgba(30,41,59,.85);
-  --border:    rgba(255,255,255,.08);
-  --border-hover: rgba(99,218,135,.3);
+  --bg-base:   #f8fafc;
+  --bg-card:   #ffffff;
+  --bg-card2:  #f1f5f9;
+  --bg-glass:  rgba(255,255,255,.85);
+  --border:    rgba(0,0,0,.08);
+  --border-hover: rgba(34,197,94,.3);
 
   /* Text */
-  --text-primary:   #f1f5f9;
-  --text-secondary: #94a3b8;
+  --text-primary:   #0f172a;
+  --text-secondary: #475569;
   --text-muted:     #64748b;
 
   /* Semantic */
@@ -345,7 +345,7 @@ body {
 
 /* head */
 .member-table thead tr {
-  background: linear-gradient(135deg, #1a2e1a, #1a2040);
+  background: linear-gradient(135deg, #e8f5e9, #e3f2fd);
   border-bottom: 1px solid var(--border);
 }
 
@@ -373,10 +373,10 @@ body {
 .member-table tbody tr:hover { background: var(--bg-card2); }
 
 .member-table tbody tr.present {
-  background: linear-gradient(90deg, rgba(34,197,94,.08), rgba(30,41,59,1) 70%);
+  background: linear-gradient(90deg, rgba(34,197,94,.08), var(--bg-card) 70%);
 }
 .member-table tbody tr.present:hover {
-  background: linear-gradient(90deg, rgba(34,197,94,.14), rgba(38,51,71,1) 70%);
+  background: linear-gradient(90deg, rgba(34,197,94,.14), var(--bg-card2) 70%);
 }
 
 .member-table td {
@@ -587,7 +587,7 @@ body {
 /* ---- footer row ---- */
 .table-footer td {
   padding: 14px 12px;
-  background: linear-gradient(135deg, #1a2e1a, #1a2040);
+  background: linear-gradient(135deg, #e8f5e9, #e3f2fd);
   border-top: 1px solid var(--border);
   font-weight: 700;
   font-size: .85rem;
@@ -1017,7 +1017,7 @@ body {
   font-weight: 600;
   padding: 2px 6px;
   border-radius: var(--r-sm);
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(0, 0, 0, 0.04);
 }
 .gender-nam { color: var(--blue-400); }
 .gender-nu { color: var(--orange-400); }
