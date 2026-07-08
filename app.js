@@ -85,9 +85,6 @@ function renderTable() {
       case 'unpaid':    return m.payment === 'unpaid';
       case 'nam':       return m.gender === 'nam';
       case 'nu':        return m.gender === 'nu';
-      case 'yeu':       return m.level === 'yeu';
-      case 'tb_minus':  return m.level === 'tb_minus';
-      case 'tb':        return m.level === 'tb';
       default: return true;
     }
   });

@@ -78,9 +78,6 @@
         <button class="chip" data-filter="unpaid">💳 Chưa TT</button>
         <button class="chip" data-filter="nam">👨 Nam</button>
         <button class="chip" data-filter="nu">👩 Nữ</button>
-        <button class="chip" data-filter="yeu">🟢 Yếu</button>
-        <button class="chip" data-filter="tb_minus">🔵 TB-</button>
-        <button class="chip" data-filter="tb">🟠 TB</button>
       </div>
     </div>
     <div class="search-wrap">
@@ -90,34 +87,36 @@
   </section>
 
   <!-- ===== COST CONFIG BAR ===== -->
-  <section class="cost-config-bar">
-    <div class="cost-inputs">
-      <div class="cost-input-group">
-        <label for="price-male">👨 Giá Nam:</label>
-        <input type="number" id="price-male" class="cost-input" value="60000" step="5000" min="0" />
-        <span>đ</span>
+  <div class="cost-config-container">
+    <section class="cost-config-bar">
+      <div class="cost-inputs">
+        <div class="cost-input-group">
+          <label for="price-male">👨 Giá Nam:</label>
+          <input type="number" id="price-male" class="cost-input" value="60000" step="5000" min="0" />
+          <span>đ</span>
+        </div>
+        <div class="cost-input-group">
+          <label for="price-female">👩 Giá Nữ:</label>
+          <input type="number" id="price-female" class="cost-input" value="40000" step="5000" min="0" />
+          <span>đ</span>
+        </div>
       </div>
-      <div class="cost-input-group">
-        <label for="price-female">👩 Giá Nữ:</label>
-        <input type="number" id="price-female" class="cost-input" value="40000" step="5000" min="0" />
-        <span>đ</span>
+      <div class="cost-summary">
+        <div class="cost-sum-item">
+          <span class="lbl">Tổng thu:</span>
+          <strong id="cash-total">0đ</strong>
+        </div>
+        <div class="cost-sum-item accent-green">
+          <span class="lbl">Đã thu:</span>
+          <strong id="cash-collected">0đ</strong>
+        </div>
+        <div class="cost-sum-item accent-red">
+          <span class="lbl">Chưa thu:</span>
+          <strong id="cash-unpaid">0đ</strong>
+        </div>
       </div>
-    </div>
-    <div class="cost-summary">
-      <div class="cost-sum-item">
-        <span class="lbl">Tổng thu:</span>
-        <strong id="cash-total">0đ</strong>
-      </div>
-      <div class="cost-sum-item accent-green">
-        <span class="lbl">Đã thu:</span>
-        <strong id="cash-collected">0đ</strong>
-      </div>
-      <div class="cost-sum-item accent-red">
-        <span class="lbl">Chưa thu:</span>
-        <strong id="cash-unpaid">0đ</strong>
-      </div>
-    </div>
-  </section>
+    </section>
+  </div>
 
   <!-- ===== MAIN TABLE ===== -->
   <main class="table-container">
