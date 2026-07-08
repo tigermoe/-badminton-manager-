@@ -134,7 +134,12 @@ function rowHTML(m) {
   return `
     <tr data-id="${m.id}" class="${m.present ? 'present' : ''}">
       <td><span class="member-name">${escHtml(m.name)}</span></td>
-      <td><span class="gender-badge ${genderCls}">${genderLbl}</span></td>
+      <td>
+        <select class="gender-select ${genderCls}" data-id="${m.id}" aria-label="Giới tính">
+          <option value="nam" ${m.gender === 'nam' ? 'selected' : ''}>👨 Nam</option>
+          <option value="nu" ${m.gender === 'nu' ? 'selected' : ''}>👩 Nữ</option>
+        </select>
+      </td>
       <td><span class="badge ${level.cls}">${level.label}</span></td>
       <td style="text-align:center;">
         <button class="attend-btn ${m.present ? 'on' : ''}" 
@@ -199,6 +204,11 @@ function attachRowListeners(list) {
     sel.addEventListener('change', () => changePayment(sel.dataset.id, sel.value));
   });
 
+  // gender select
+  document.querySelectorAll('.gender-select').forEach(sel => {
+    sel.addEventListener('change', () => changeGender(sel.dataset.id, sel.value));
+  });
+
   // delete
   document.querySelectorAll('.delete-btn').forEach(btn => {
     btn.addEventListener('click', () => deleteMember(btn.dataset.id));
@@ -253,6 +263,15 @@ function changePayment(id, value) {
   }
   updateStats();
   showToast(`💳 ${m.name}: ${PAYMENT_OPTIONS[value]?.label}`, 'info');
+}
+
+function changeGender(id, value) {
+  const m = members.find(x => x.id === id);
+  if (!m) return;
+  m.gender = value;
+  save();
+  renderTable();
+  showToast(`👨👩 ${m.name}: Giới tính ${value === 'nu' ? 'Nữ' : 'Nam'}`, 'info');
 }
 
 function deleteMember(id) {
