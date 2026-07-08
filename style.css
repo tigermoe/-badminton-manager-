@@ -921,3 +921,120 @@ body {
   .member-table td, .member-table th { padding: 10px 8px; }
   .set-pill { width: 28px; height: 28px; font-size: .75rem; }
 }
+
+/* ============================================================
+   COST CONFIG BAR STYLES
+   ============================================================ */
+.cost-config-bar {
+  max-width: 1200px;
+  margin: 0 auto 16px;
+  padding: 12px 16px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--r-xl);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.cost-inputs {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.cost-input-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: .875rem;
+  color: var(--text-secondary);
+}
+
+.cost-input {
+  width: 90px;
+  background: var(--bg-card2);
+  border: 1.5px solid var(--border);
+  border-radius: var(--r-md);
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: .875rem;
+  font-weight: 700;
+  padding: 6px 8px;
+  outline: none;
+  transition: border-color .15s;
+  text-align: right;
+}
+.cost-input:focus { border-color: var(--green-500); }
+
+.cost-summary {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.cost-sum-item {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+.cost-sum-item .lbl {
+  font-size: .72rem;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+.cost-sum-item strong {
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: var(--text-primary);
+}
+.cost-sum-item.accent-green strong { color: var(--green-400); }
+.cost-sum-item.accent-red strong { color: var(--red-400); }
+
+/* Gender display badge in table */
+.gender-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: .8rem;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: var(--r-sm);
+  background: rgba(255, 255, 255, 0.05);
+}
+.gender-nam { color: var(--blue-400); }
+.gender-nu { color: var(--orange-400); }
+
+/* Gender Radio Button group */
+.gender-radio-group {
+  display: flex;
+  gap: 16px;
+  margin-top: 6px;
+}
+.gender-radio-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: .9rem;
+  cursor: pointer;
+  color: var(--text-primary) !important;
+}
+.gender-radio-label input {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+  accent-color: var(--green-500);
+}
+
+.modal-md {
+  max-width: 500px;
+}
+
+@media (max-width: 768px) {
+  .cost-config-bar { flex-direction: column; align-items: stretch; }
+  .cost-inputs { justify-content: space-between; }
+  .cost-summary { justify-content: space-between; margin-top: 8px; border-top: 1px solid var(--border); padding-top: 12px; }
+}
+

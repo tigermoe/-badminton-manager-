@@ -8,10 +8,9 @@
 
 // ==================== DATA ====================
 const LEVELS = {
-  beginner:  { label: '🟢 Mới chơi', cls: 'badge-beginner' },
-  medium:    { label: '🔵 Trung bình', cls: 'badge-medium' },
-  good:      { label: '🟠 Khá',       cls: 'badge-good' },
-  excellent: { label: '🔴 Tốt',       cls: 'badge-excellent' },
+  yeu:      { label: '🟢 Yếu', cls: 'badge-beginner' },
+  tb_minus: { label: '🔵 TB-', cls: 'badge-medium' },
+  tb:       { label: '🟠 TB',  cls: 'badge-good' },
 };
 
 const PAYMENT_OPTIONS = {
@@ -24,20 +23,22 @@ const DEFAULT_MAX_SETS = 6;
 
 // Seed data – shown on first load
 const SEED_MEMBERS = [
-  { id: uid(), name: 'Nguyễn Văn Hùng',  level: 'excellent', present: false, sets: [], maxSets: 6, payment: 'unpaid' },
-  { id: uid(), name: 'Trần Thị Mai',     level: 'good',      present: false, sets: [], maxSets: 6, payment: 'unpaid' },
-  { id: uid(), name: 'Lê Minh Tuấn',     level: 'medium',    present: false, sets: [], maxSets: 6, payment: 'unpaid' },
-  { id: uid(), name: 'Phạm Quốc Bảo',   level: 'beginner',  present: false, sets: [], maxSets: 6, payment: 'unpaid' },
-  { id: uid(), name: 'Hoàng Anh Khoa',   level: 'good',      present: false, sets: [], maxSets: 6, payment: 'unpaid' },
-  { id: uid(), name: 'Đặng Thu Hằng',   level: 'medium',    present: false, sets: [], maxSets: 6, payment: 'unpaid' },
-  { id: uid(), name: 'Võ Thanh Liêm',   level: 'excellent', present: false, sets: [], maxSets: 6, payment: 'unpaid' },
-  { id: uid(), name: 'Bùi Trọng Nghĩa', level: 'beginner',  present: false, sets: [], maxSets: 6, payment: 'unpaid' },
+  { id: uid(), name: 'Nguyễn Văn Hùng',  gender: 'nam', level: 'tb',       present: false, sets: [], maxSets: 6, payment: 'unpaid' },
+  { id: uid(), name: 'Trần Thị Mai',     gender: 'nu',  level: 'tb_minus', present: false, sets: [], maxSets: 6, payment: 'unpaid' },
+  { id: uid(), name: 'Lê Minh Tuấn',     gender: 'nam', level: 'tb_minus', present: false, sets: [], maxSets: 6, payment: 'unpaid' },
+  { id: uid(), name: 'Phạm Quốc Bảo',   gender: 'nam', level: 'yeu',      present: false, sets: [], maxSets: 6, payment: 'unpaid' },
+  { id: uid(), name: 'Hoàng Anh Khoa',   gender: 'nam', level: 'tb',       present: false, sets: [], maxSets: 6, payment: 'unpaid' },
+  { id: uid(), name: 'Đặng Thu Hằng',   gender: 'nu',  level: 'tb_minus', present: false, sets: [], maxSets: 6, payment: 'unpaid' },
+  { id: uid(), name: 'Võ Thanh Liêm',   gender: 'nam', level: 'tb',       present: false, sets: [], maxSets: 6, payment: 'unpaid' },
+  { id: uid(), name: 'Bùi Trọng Nghĩa', gender: 'nam', level: 'yeu',      present: false, sets: [], maxSets: 6, payment: 'unpaid' },
 ];
 
 // ==================== STATE ====================
 let members = [];
 let activeFilter = 'all';
 let searchQuery = '';
+let priceMale = 60000;
+let priceFemale = 40000;
 
 // ==================== UTILS ====================
 function uid() {
@@ -46,15 +47,28 @@ function uid() {
 
 function save() {
   localStorage.setItem('bm_members', JSON.stringify(members));
+  localStorage.setItem('bm_price_male', priceMale);
+  localStorage.setItem('bm_price_female', priceFemale);
 }
 
 function load() {
   try {
     const raw = localStorage.getItem('bm_members');
-    if (raw) { members = JSON.parse(raw); return; }
+    if (raw) { members = JSON.parse(raw); } else {
+      members = SEED_MEMBERS.map(m => ({ ...m, id: uid() }));
+      save();
+    }
+  } catch(e) {
+    members = SEED_MEMBERS.map(m => ({ ...m, id: uid() }));
+    save();
+  }
+
+  try {
+    const pm = localStorage.getItem('bm_price_male');
+    if (pm) priceMale = parseInt(pm) || 60000;
+    const pf = localStorage.getItem('bm_price_female');
+    if (pf) priceFemale = parseInt(pf) || 40000;
   } catch(e) {}
-  members = SEED_MEMBERS.map(m => ({ ...m, id: uid() }));
-  save();
 }
 
 // ==================== RENDER ====================
@@ -69,16 +83,17 @@ function renderTable() {
       case 'present':   return m.present;
       case 'absent':    return !m.present;
       case 'unpaid':    return m.payment === 'unpaid';
-      case 'beginner':  return m.level === 'beginner';
-      case 'medium':    return m.level === 'medium';
-      case 'good':      return m.level === 'good';
-      case 'excellent': return m.level === 'excellent';
+      case 'nam':       return m.gender === 'nam';
+      case 'nu':        return m.gender === 'nu';
+      case 'yeu':       return m.level === 'yeu';
+      case 'tb_minus':  return m.level === 'tb_minus';
+      case 'tb':        return m.level === 'tb';
       default: return true;
     }
   });
 
   if (list.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="7"><div class="empty-state"><div class="empty-icon">🏸</div><p>Không tìm thấy thành viên nào phù hợp.</p></div></td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="8"><div class="empty-state"><div class="empty-icon">🏸</div><p>Không tìm thấy thành viên nào phù hợp.</p></div></td></tr>`;
     updateStats();
     return;
   }
@@ -89,9 +104,18 @@ function renderTable() {
 }
 
 function rowHTML(m) {
-  const level = LEVELS[m.level] || LEVELS.medium;
+  const level = LEVELS[m.level] || LEVELS.tb_minus;
   const payment = PAYMENT_OPTIONS[m.payment] || PAYMENT_OPTIONS.unpaid;
   const total = m.sets.filter(Boolean).length;
+  const genderLbl = m.gender === 'nu' ? '👩 Nữ' : '👨 Nam';
+  const genderCls = m.gender === 'nu' ? 'gender-nu' : 'gender-nam';
+
+  // calculate price for this person
+  let cost = 0;
+  if (m.present) {
+    cost = m.gender === 'nu' ? priceFemale : priceMale;
+  }
+  const costFmt = cost > 0 ? `${cost.toLocaleString('vi-VN')}đ` : '0đ';
 
   // build set pills
   const pills = Array.from({ length: m.maxSets }, (_, i) => {
@@ -106,6 +130,7 @@ function rowHTML(m) {
   return `
     <tr data-id="${m.id}" class="${m.present ? 'present' : ''}">
       <td><span class="member-name">${escHtml(m.name)}</span></td>
+      <td><span class="gender-badge ${genderCls}">${genderLbl}</span></td>
       <td><span class="badge ${level.cls}">${level.label}</span></td>
       <td style="text-align:center;">
         <button class="attend-btn ${m.present ? 'on' : ''}" 
@@ -126,9 +151,14 @@ function rowHTML(m) {
         <span class="total-badge ${total > 0 ? 'nonzero' : ''}">${total}</span>
       </td>
       <td>
-        <select class="payment-select ${payment.cls}" data-id="${m.id}" aria-label="Trạng thái thanh toán">
-          ${paymentOpts}
-        </select>
+        <div style="display:flex; flex-direction:column; gap:4px;">
+          <select class="payment-select ${payment.cls}" data-id="${m.id}" aria-label="Trạng thái thanh toán">
+            ${paymentOpts}
+          </select>
+          <span style="font-size:0.75rem; font-weight:700; color:var(--text-muted); text-align:right; margin-right:4px;">
+            Phí: ${costFmt}
+          </span>
+        </div>
       </td>
       <td style="text-align:center;">
         <button class="delete-btn" data-id="${m.id}" aria-label="Xoá thành viên" title="Xoá thành viên">🗑</button>
@@ -248,16 +278,40 @@ function updateStats() {
   const total   = members.length;
   const present = members.filter(m => m.present).length;
   const sets    = members.reduce((s, m) => s + (m.sets || []).filter(Boolean).length, 0);
-  const unpaid  = members.filter(m => m.payment === 'unpaid' && m.present).length;
+  const unpaidCount  = members.filter(m => m.payment === 'unpaid' && m.present).length;
 
   document.getElementById('stat-total-val').textContent   = total;
   document.getElementById('stat-present-val').textContent = present;
   document.getElementById('stat-sets-val').textContent    = sets;
-  document.getElementById('stat-unpaid-val').textContent  = unpaid;
+  document.getElementById('stat-unpaid-val').textContent  = unpaidCount;
 
   document.getElementById('footer-present').textContent = present;
   document.getElementById('footer-sets').textContent    = sets;
-  document.getElementById('footer-unpaid').textContent  = unpaid;
+  document.getElementById('footer-unpaid').textContent  = unpaidCount;
+
+  // Calculate actual costs
+  let totalExpected = 0;
+  let totalCollected = 0;
+  let totalUnpaid = 0;
+
+  members.forEach(m => {
+    if (!m.present) return;
+    const fee = m.gender === 'nu' ? priceFemale : priceMale;
+    totalExpected += fee;
+    if (m.payment === 'unpaid') {
+      totalUnpaid += fee;
+    } else {
+      totalCollected += fee;
+    }
+  });
+
+  document.getElementById('cash-total').textContent = `${totalExpected.toLocaleString('vi-VN')}đ`;
+  document.getElementById('cash-collected').textContent = `${totalCollected.toLocaleString('vi-VN')}đ`;
+  document.getElementById('cash-unpaid').textContent = `${totalUnpaid.toLocaleString('vi-VN')}đ`;
+
+  // Update inputs
+  document.getElementById('price-male').value = priceMale;
+  document.getElementById('price-female').value = priceFemale;
 }
 
 // ==================== MODAL ====================
@@ -293,7 +347,11 @@ function addMember() {
   const level   = document.getElementById('input-level').value;
   const maxSets = parseInt(document.getElementById('input-sets').value) || DEFAULT_MAX_SETS;
 
-  const m = { id: uid(), name, level, present: false, sets: [], maxSets, payment: 'unpaid' };
+  // Get gender value
+  const genderEl = document.querySelector('input[name="input-gender"]:checked');
+  const gender   = genderEl ? genderEl.value : 'nam';
+
+  const m = { id: uid(), name, gender, level, present: false, sets: [], maxSets, payment: 'unpaid' };
   members.push(m);
   save();
   renderTable();
@@ -315,6 +373,7 @@ function openQuickAddModal() {
 
 function parseQuickList() {
   const raw = document.getElementById('quick-textarea').value;
+  const defaultGender = document.getElementById('quick-default-gender').value;
   const defaultLevel  = document.getElementById('quick-default-level').value;
   const defaultMaxSets = parseInt(document.getElementById('quick-default-sets').value) || DEFAULT_MAX_SETS;
 
@@ -336,7 +395,7 @@ function parseQuickList() {
     const lc = name.toLowerCase();
     const isDup = existingNames.has(lc) || seenInPaste.has(lc);
     seenInPaste.add(lc);
-    return { name, level: defaultLevel, maxSets: defaultMaxSets, isDup, checked: !isDup };
+    return { name, gender: defaultGender, level: defaultLevel, maxSets: defaultMaxSets, isDup, checked: !isDup };
   });
 
   buildQuickPreview(rows);
@@ -347,14 +406,16 @@ function buildQuickPreview(rows) {
   const tbody = document.getElementById('quick-preview-tbody');
   const countEl = document.getElementById('quick-preview-count');
 
-  const levelOpts = Object.entries(LEVELS).map(([k, v]) =>
-    `<option value="${k}">${v.label}</option>`
-  ).join('');
-
   tbody.innerHTML = rows.map((r, i) => `
     <tr class="${r.isDup ? 'row-duplicate' : ''}" data-idx="${i}">
       <td><input type="checkbox" class="quick-row-check" data-idx="${i}" ${r.checked && !r.isDup ? 'checked' : ''} ${r.isDup ? 'disabled title="Đã tồn tại"' : ''}></td>
       <td>${escHtml(r.name)}</td>
+      <td>
+        <select class="quick-gender-select" data-idx="${i}" style="width:100%; background:var(--bg-card2); border:1px solid var(--border); border-radius:var(--r-sm); color:var(--text-primary); font-size:.78rem; padding:4px 8px;">
+          <option value="nam" ${r.gender === 'nam' ? 'selected' : ''}>👨 Nam</option>
+          <option value="nu" ${r.gender === 'nu' ? 'selected' : ''}>👩 Nữ</option>
+        </select>
+      </td>
       <td>
         <select class="quick-level-select" data-idx="${i}">
           ${Object.entries(LEVELS).map(([k,v]) =>
@@ -381,6 +442,13 @@ function buildQuickPreview(rows) {
   tbody.querySelectorAll('.quick-level-select').forEach(sel => {
     sel.addEventListener('change', () => {
       rows[parseInt(sel.dataset.idx)].level = sel.value;
+    });
+  });
+
+  // attach gender-select listeners
+  tbody.querySelectorAll('.quick-gender-select').forEach(sel => {
+    sel.addEventListener('change', () => {
+      rows[parseInt(sel.dataset.idx)].gender = sel.value;
     });
   });
 
@@ -411,8 +479,9 @@ function confirmQuickAdd() {
     const cb  = row.querySelector('.quick-row-check');
     if (!cb || !cb.checked) return;
     const name  = row.children[1].textContent.trim();
+    const gender = row.querySelector('.quick-gender-select').value;
     const level = row.querySelector('.quick-level-select').value;
-    members.push({ id: uid(), name, level, present: false, sets: [], maxSets: defaultMaxSets, payment: 'unpaid' });
+    members.push({ id: uid(), name, gender, level, present: false, sets: [], maxSets: defaultMaxSets, payment: 'unpaid' });
     added++;
   });
 
@@ -432,11 +501,33 @@ function setDate() {
   document.getElementById('session-date').textContent = `📅 Buổi chơi: ${d}`;
 }
 
+// ==================== WIPE DATABASE ====================
+function wipeAllMembers() {
+  if (!confirm('🚨 CẢNH BÁO: Bạn có chắc chắn muốn xoá sạch hoàn toàn danh sách người chơi khỏi hệ thống? Hành động này không thể hoàn tác!')) return;
+  members = [];
+  save();
+  renderTable();
+  closeModal('reset-modal-overlay');
+  showToast('🗑️ Đã xoá sạch toàn bộ người chơi!', 'error');
+}
+
 // ==================== INIT ====================
 function init() {
   load();
   setDate();
   renderTable();
+
+  // Price inputs change
+  document.getElementById('price-male').addEventListener('input', e => {
+    priceMale = parseInt(e.target.value) || 0;
+    save();
+    renderTable();
+  });
+  document.getElementById('price-female').addEventListener('input', e => {
+    priceFemale = parseInt(e.target.value) || 0;
+    save();
+    renderTable();
+  });
 
   // header buttons
   document.getElementById('btn-quick-add').addEventListener('click', openQuickAddModal);
@@ -471,6 +562,7 @@ function init() {
   document.getElementById('reset-modal-close').addEventListener('click', () => closeModal('reset-modal-overlay'));
   document.getElementById('reset-cancel').addEventListener('click', () => closeModal('reset-modal-overlay'));
   document.getElementById('reset-confirm').addEventListener('click', resetSession);
+  document.getElementById('reset-clear-all').addEventListener('click', wipeAllMembers);
 
   // close modals on overlay click
   ['modal-overlay', 'reset-modal-overlay', 'quick-modal-overlay'].forEach(id => {

@@ -76,15 +76,46 @@
         <button class="chip" data-filter="present">✅ Đã đến</button>
         <button class="chip" data-filter="absent">🔴 Chưa đến</button>
         <button class="chip" data-filter="unpaid">💳 Chưa TT</button>
-        <button class="chip" data-filter="beginner">🟢 Mới chơi</button>
-        <button class="chip" data-filter="medium">🔵 Trung bình</button>
-        <button class="chip" data-filter="good">🟠 Khá</button>
-        <button class="chip" data-filter="excellent">🔴 Tốt</button>
+        <button class="chip" data-filter="nam">👨 Nam</button>
+        <button class="chip" data-filter="nu">👩 Nữ</button>
+        <button class="chip" data-filter="yeu">🟢 Yếu</button>
+        <button class="chip" data-filter="tb_minus">🔵 TB-</button>
+        <button class="chip" data-filter="tb">🟠 TB</button>
       </div>
     </div>
     <div class="search-wrap">
       <span class="search-icon">🔍</span>
       <input type="text" id="search-input" class="search-input" placeholder="Tìm thành viên…" />
+    </div>
+  </section>
+
+  <!-- ===== COST CONFIG BAR ===== -->
+  <section class="cost-config-bar">
+    <div class="cost-inputs">
+      <div class="cost-input-group">
+        <label for="price-male">👨 Giá Nam:</label>
+        <input type="number" id="price-male" class="cost-input" value="60000" step="5000" min="0" />
+        <span>đ</span>
+      </div>
+      <div class="cost-input-group">
+        <label for="price-female">👩 Giá Nữ:</label>
+        <input type="number" id="price-female" class="cost-input" value="40000" step="5000" min="0" />
+        <span>đ</span>
+      </div>
+    </div>
+    <div class="cost-summary">
+      <div class="cost-sum-item">
+        <span class="lbl">Tổng thu:</span>
+        <strong id="cash-total">0đ</strong>
+      </div>
+      <div class="cost-sum-item accent-green">
+        <span class="lbl">Đã thu:</span>
+        <strong id="cash-collected">0đ</strong>
+      </div>
+      <div class="cost-sum-item accent-red">
+        <span class="lbl">Chưa thu:</span>
+        <strong id="cash-unpaid">0đ</strong>
+      </div>
     </div>
   </section>
 
@@ -95,6 +126,7 @@
         <thead>
           <tr>
             <th class="col-name">Tên thành viên</th>
+            <th class="col-gender">Giới tính</th>
             <th class="col-level">Trình độ</th>
             <th class="col-attend">Điểm danh</th>
             <th class="col-sets">Set cầu</th>
@@ -108,7 +140,7 @@
         </tbody>
         <tfoot>
           <tr class="table-footer" id="table-footer">
-            <td colspan="2" class="footer-label">📊 Tổng kết buổi</td>
+            <td colspan="3" class="footer-label">📊 Tổng kết buổi</td>
             <td class="footer-present"><span id="footer-present">0</span> người</td>
             <td class="footer-sets-label">Tổng set:</td>
             <td class="footer-sets"><span id="footer-sets">0</span></td>
@@ -133,12 +165,22 @@
           <input type="text" id="input-name" class="form-control" placeholder="VD: Nguyễn Văn A" />
         </div>
         <div class="form-group">
+          <label>Giới tính</label>
+          <div class="gender-radio-group">
+            <label class="gender-radio-label">
+              <input type="radio" name="input-gender" value="nam" checked> 👨 Nam
+            </label>
+            <label class="gender-radio-label">
+              <input type="radio" name="input-gender" value="nu"> 👩 Nữ
+            </label>
+          </div>
+        </div>
+        <div class="form-group">
           <label for="input-level">Trình độ</label>
           <select id="input-level" class="form-control">
-            <option value="beginner">🟢 Mới chơi</option>
-            <option value="medium" selected>🔵 Trung bình</option>
-            <option value="good">🟠 Khá</option>
-            <option value="excellent">🔴 Tốt</option>
+            <option value="yeu">🟢 Yếu</option>
+            <option value="tb_minus" selected>🔵 TB-</option>
+            <option value="tb">🟠 TB</option>
           </select>
         </div>
         <div class="form-group">
@@ -161,7 +203,7 @@
         <button class="modal-close" id="quick-modal-close" aria-label="Đóng">✕</button>
       </div>
       <div class="modal-body">
-        <p class="quick-hint">Điền danh sách thành viên — mỗi người một dòng. Chọn trình độ cho từng người ngay trong bảng.</p>
+        <p class="quick-hint">Điền danh sách thành viên — mỗi người một dòng. Chọn trình độ và giới tính cho từng người ngay trong bảng.</p>
 
         <div class="quick-input-wrap">
           <div class="form-group">
@@ -172,12 +214,18 @@
           </div>
           <div class="quick-defaults">
             <div class="form-group">
+              <label for="quick-default-gender">👨👩 Giới tính mặc định</label>
+              <select id="quick-default-gender" class="form-control">
+                <option value="nam" selected>👨 Nam</option>
+                <option value="nu">👩 Nữ</option>
+              </select>
+            </div>
+            <div class="form-group">
               <label for="quick-default-level">🎯 Trình độ mặc định</label>
               <select id="quick-default-level" class="form-control">
-                <option value="beginner">🟢 Mới chơi</option>
-                <option value="medium" selected>🔵 Trung bình</option>
-                <option value="good">🟠 Khá</option>
-                <option value="excellent">🔴 Tốt</option>
+                <option value="yeu">🟢 Yếu</option>
+                <option value="tb_minus" selected>🔵 TB-</option>
+                <option value="tb">🟠 TB</option>
               </select>
             </div>
             <div class="form-group">
@@ -200,7 +248,8 @@
                 <tr>
                   <th style="width:36px">✓</th>
                   <th>Tên thành viên</th>
-                  <th>Trình độ</th>
+                  <th style="width:100px">Giới tính</th>
+                  <th style="width:120px">Trình độ</th>
                   <th style="width:60px">Trạng thái</th>
                 </tr>
               </thead>
@@ -218,17 +267,28 @@
 
   <!-- ===== CONFIRM RESET MODAL ===== -->
   <div class="modal-overlay" id="reset-modal-overlay" aria-hidden="true">
-    <div class="modal modal-sm" role="dialog" aria-modal="true">
+    <div class="modal modal-md" role="dialog" aria-modal="true">
       <div class="modal-header">
-        <h2 class="modal-title">🔄 Đặt lại buổi chơi</h2>
+        <h2 class="modal-title">🔄 Đặt lại hoặc Xoá sạch</h2>
         <button class="modal-close" id="reset-modal-close">✕</button>
       </div>
       <div class="modal-body">
-        <p style="color:var(--text-secondary);line-height:1.6;">Thao tác này sẽ <strong>xoá toàn bộ điểm danh, set cầu và thanh toán</strong> của mọi thành viên trong buổi hôm nay. Bạn có chắc không?</p>
+        <p style="color:var(--text-secondary);line-height:1.6;margin-bottom:12px;">Chọn một trong hai tuỳ chọn đặt lại dưới đây:</p>
+        <div class="reset-options" style="display:grid;grid-template-columns:1fr;gap:12px;">
+          <div class="reset-option-card" style="background:var(--bg-card2);padding:14px;border-radius:var(--r-md);border:1px solid var(--border)">
+            <h4 style="margin-bottom:4px;color:var(--text-primary)">1. Làm mới buổi chơi (Giữ người chơi)</h4>
+            <p style="font-size:0.8rem;color:var(--text-muted)">Xoá sạch điểm danh, set cầu đã tick, trạng thái thanh toán hôm nay. Giữ nguyên danh sách thành viên.</p>
+            <button class="btn btn-outline" id="reset-confirm" style="margin-top:10px;width:100%;">🔄 Làm mới buổi chơi</button>
+          </div>
+          <div class="reset-option-card danger" style="background:rgba(239,68,68,0.05);padding:14px;border-radius:var(--r-md);border:1px solid rgba(239,68,68,0.25)">
+            <h4 style="margin-bottom:4px;color:var(--red-400)">2. Xoá sạch hoàn toàn (Mất hết)</h4>
+            <p style="font-size:0.8rem;color:var(--text-muted)">Xoá sạch hoàn toàn mọi thông tin, bao gồm cả danh sách người chơi khỏi hệ thống. Bắt đầu lại từ đầu.</p>
+            <button class="btn btn-danger" id="reset-clear-all" style="margin-top:10px;width:100%;">🗑 Xoá sạch mọi người chơi</button>
+          </div>
+        </div>
       </div>
-      <div class="modal-footer">
-        <button class="btn btn-ghost" id="reset-cancel">Huỷ</button>
-        <button class="btn btn-danger" id="reset-confirm">🔄 Đặt lại ngay</button>
+      <div class="modal-footer" style="padding-top:0">
+        <button class="btn btn-ghost" id="reset-cancel">Đóng</button>
       </div>
     </div>
   </div>
