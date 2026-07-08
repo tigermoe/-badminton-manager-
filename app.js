@@ -9,6 +9,7 @@
 // ==================== DATA ====================
 const LEVELS = {
   yeu:      { label: '🟢 Yếu', cls: 'badge-beginner' },
+  yeu_plus: { label: '🟢 Yếu+', cls: 'badge-beginner' },
   tb_minus: { label: '🔵 TB-', cls: 'badge-medium' },
   tb:       { label: '🟠 TB',  cls: 'badge-good' },
 };
@@ -60,6 +61,21 @@ function load() {
     }
   } catch(e) {
     members = SEED_MEMBERS.map(m => ({ ...m, id: uid() }));
+    save();
+  }
+
+  // Auto-insert Quang Long for sync testing
+  if (Array.isArray(members) && !members.some(m => m.name === 'Quang Long')) {
+    members.push({
+      id: uid(),
+      name: 'Quang Long',
+      gender: 'nam',
+      level: 'yeu_plus',
+      present: true,
+      sets: [],
+      maxSets: 6,
+      payment: 'unpaid'
+    });
     save();
   }
 
