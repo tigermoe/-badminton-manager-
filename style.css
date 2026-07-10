@@ -1074,3 +1074,67 @@ body {
   .cost-summary { justify-content: space-between; margin-top: 8px; border-top: 1px solid var(--border); padding-top: 12px; }
 }
 
+/* ============================================================
+   HISTORY & SYNC STYLES
+   ============================================================ */
+.history-item {
+  background: var(--bg-card2);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  padding: 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  transition: transform 0.2s;
+}
+.history-item:hover {
+  transform: translateY(-2px);
+  border-color: var(--border-hover);
+}
+.history-item-info {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.history-item-date {
+  font-weight: 700;
+  font-size: 1rem;
+  color: var(--text-primary);
+}
+.history-item-meta {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.history-item-actions {
+  display: flex;
+  gap: 8px;
+}
+
+@media (max-width: 900px) {
+  #btn-history span, #btn-sync span {
+    display: none;
+  }
+  #btn-history::before {
+    content: '📅';
+  }
+  #btn-sync::before {
+    content: '☁️';
+  }
+}
+
+@media (max-width: 600px) {
+  .history-item {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .history-item-actions {
+    justify-content: flex-end;
+    margin-top: 8px;
+  }
+}
+
+

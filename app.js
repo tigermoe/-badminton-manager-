@@ -36,38 +36,119 @@ const SEED_MEMBERS = [
 
 // ==================== STATE ====================
 let members = [];
+let sessions = [];
 let activeFilter = 'all';
 let searchQuery = '';
 let priceMale = 60000;
 let priceFemale = 40000;
+let db = null;
+let firebaseConfig = null;
 
 // ==================== UTILS ====================
 function uid() {
   return Math.random().toString(36).slice(2) + Date.now().toString(36);
 }
 
+function initFirebase() {
+  const rawConfig = localStorage.getItem('bm_firebase_config');
+  if (rawConfig) {
+    try {
+      firebaseConfig = JSON.parse(rawConfig);
+      if (firebaseConfig && firebaseConfig.apiKey) {
+        // If there's an existing app, delete it first
+        if (window.firebase && firebase.apps.length > 0) {
+          firebase.app().delete();
+        }
+        firebase.initializeApp(firebaseConfig);
+        db = firebase.database();
+        
+        // Update UI status
+        const statusText = document.getElementById('sync-status-text');
+        if (statusText) statusText.textContent = '🟢 Đã kết nối';
+        
+        // Listeners for real-time sync
+        db.ref('members').on('value', snapshot => {
+          const data = snapshot.val();
+          if (data) {
+            members = data;
+            renderTable();
+          }
+        });
+        
+        db.ref('priceMale').on('value', snapshot => {
+          const val = snapshot.val();
+          if (val !== null) {
+            priceMale = val;
+            const input = document.getElementById('price-male');
+            if (input) input.value = priceMale;
+            updateStats();
+          }
+        });
+        
+        db.ref('priceFemale').on('value', snapshot => {
+          const val = snapshot.val();
+          if (val !== null) {
+            priceFemale = val;
+            const input = document.getElementById('price-female');
+            if (input) input.value = priceFemale;
+            updateStats();
+          }
+        });
+
+        db.ref('sessions').on('value', snapshot => {
+          const data = snapshot.val();
+          sessions = data || [];
+          renderHistory();
+        });
+
+        showToast('☁️ Đã kết nối & Đồng bộ Đám mây Firebase!', 'success');
+        return true;
+      }
+    } catch (e) {
+      console.error('Lỗi cấu hình Firebase:', e);
+      showToast('⚠️ Lỗi cấu hình Firebase, chạy chế độ ngoại tuyến.', 'error');
+    }
+  }
+  
+  db = null;
+  const statusText = document.getElementById('sync-status-text');
+  if (statusText) statusText.textContent = '☁️ Đồng bộ';
+  return false;
+}
+
 function save() {
   localStorage.setItem('bm_members', JSON.stringify(members));
   localStorage.setItem('bm_price_male', priceMale);
   localStorage.setItem('bm_price_female', priceFemale);
+  localStorage.setItem('bm_sessions', JSON.stringify(sessions));
+
+  if (db) {
+    db.ref('members').set(members);
+    db.ref('priceMale').set(priceMale);
+    db.ref('priceFemale').set(priceFemale);
+    db.ref('sessions').set(sessions);
+  }
 }
 
 function load() {
+  // Try to load from firebase first (handled by listeners async), load local backup immediately
   try {
     const raw = localStorage.getItem('bm_members');
     if (raw) { members = JSON.parse(raw); } else {
       members = SEED_MEMBERS.map(m => ({ ...m, id: uid() }));
-      save();
+    }
+    
+    const rawSessions = localStorage.getItem('bm_sessions');
+    if (rawSessions) {
+      sessions = JSON.parse(rawSessions);
     }
   } catch(e) {
     members = SEED_MEMBERS.map(m => ({ ...m, id: uid() }));
-    save();
   }
 
   // Clean up Quang Long from localStorage
   if (Array.isArray(members)) {
     members = members.filter(m => m.name !== 'Quang Long');
-    save();
   }
 
   try {
@@ -76,7 +157,11 @@ function load() {
     const pf = localStorage.getItem('bm_price_female');
     if (pf) priceFemale = parseInt(pf) || 40000;
   } catch(e) {}
+  
+  // Initialize firebase configs and connection
+  initFirebase();
 }
+
 
 // ==================== RENDER ====================
 function renderTable() {
@@ -293,8 +378,155 @@ function resetSession() {
   save();
   renderTable();
   closeModal('reset-modal-overlay');
-  showToast('🔄 Đã đặt lại buổi chơi!', 'info');
+  showToast('🔄 Đã làm mới buổi chơi!', 'info');
 }
+
+function saveCurrentSession() {
+  const presentMembers = members.filter(m => m.present);
+  if (presentMembers.length === 0) {
+    showToast('⚠️ Không có thành viên nào đi điểm danh hôm nay, không thể lưu!', 'error');
+    return;
+  }
+  
+  const now = new Date();
+  const days = ['Chủ Nhật','Thứ Hai','Thứ Ba','Thứ Tư','Thứ Năm','Thứ Sáu','Thứ Bảy'];
+  const dateStr = `${days[now.getDay()]}, ${now.getDate()}/${now.getMonth()+1}/${now.getFullYear()}`;
+  
+  // Calculate stats
+  let expected = 0;
+  let collected = 0;
+  let unpaid = 0;
+  let totalSets = 0;
+  
+  const sessionMembers = members.map(m => {
+    let fee = 0;
+    if (m.present) {
+      fee = m.gender === 'nu' ? priceFemale : priceMale;
+      expected += fee;
+      if (m.payment === 'unpaid') {
+        unpaid += fee;
+      } else {
+        collected += fee;
+      }
+    }
+    const setsCount = (m.sets || []).filter(Boolean).length;
+    totalSets += setsCount;
+    
+    return {
+      name: m.name,
+      gender: m.gender,
+      level: m.level,
+      present: m.present,
+      setsCount: setsCount,
+      payment: m.payment,
+      fee: fee
+    };
+  });
+  
+  const newSession = {
+    id: uid(),
+    date: dateStr,
+    timestamp: Date.now(),
+    priceMale: priceMale,
+    priceFemale: priceFemale,
+    stats: {
+      total: members.length,
+      present: presentMembers.length,
+      sets: totalSets,
+      expected: expected,
+      collected: collected,
+      unpaid: unpaid
+    },
+    members: sessionMembers
+  };
+  
+  sessions.unshift(newSession); // Put newest session first
+  
+  // Reset the current session members' state (just like normal reset)
+  members.forEach(m => {
+    m.present = false;
+    m.sets = [];
+    m.payment = 'unpaid';
+  });
+  
+  save();
+  renderTable();
+  closeModal('reset-modal-overlay');
+  showToast('💾 Đã lưu lịch sử buổi chơi và làm mới thành công!', 'success');
+}
+
+function renderHistory() {
+  const container = document.getElementById('history-list-container');
+  if (!container) return;
+  
+  if (sessions.length === 0) {
+    container.innerHTML = `<div class="empty-state"><p>Chưa có lịch sử buổi chơi nào được lưu.</p></div>`;
+    return;
+  }
+  
+  container.innerHTML = sessions.map((s, idx) => {
+    return `
+      <div class="history-item" data-id="${s.id}">
+        <div class="history-item-info">
+          <div class="history-item-date">📅 ${escHtml(s.date)}</div>
+          <div class="history-item-meta">
+            <span>👥 Điểm danh: <strong>${s.stats.present}/${s.stats.total}</strong></span>
+            <span>🏆 Set cầu: <strong>${s.stats.sets}</strong></span>
+            <span>💰 Tổng thu: <strong>${(s.stats.expected || 0).toLocaleString('vi-VN')}đ</strong></span>
+            <span>💳 Đã thu: <strong style="color:var(--green-400)">${(s.stats.collected || 0).toLocaleString('vi-VN')}đ</strong></span>
+          </div>
+        </div>
+        <div class="history-item-actions">
+          <button class="btn btn-ghost btn-sm" onclick="viewSessionDetail('${s.id}')">👁 Chi tiết</button>
+          <button class="btn btn-outline btn-sm" style="color:var(--red-400); border-color:rgba(239,68,68,0.4);" onclick="deleteSession('${s.id}')">🗑 Xóa</button>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function viewSessionDetail(id) {
+  const s = sessions.find(x => x.id === id);
+  if (!s) return;
+  
+  document.getElementById('detail-modal-title').textContent = `📊 Chi tiết ngày ${s.date}`;
+  
+  const tbody = document.getElementById('detail-modal-tbody');
+  tbody.innerHTML = s.members.map(m => {
+    const presentLbl = m.present ? '✅ Có' : '🔴 Vắng';
+    const paymentOpt = PAYMENT_OPTIONS[m.payment] || PAYMENT_OPTIONS.unpaid;
+    const genderLbl = m.gender === 'nu' ? '👩 Nữ' : '👨 Nam';
+    const costFmt = m.fee > 0 ? `${m.fee.toLocaleString('vi-VN')}đ` : '0đ';
+    
+    return `
+      <tr>
+        <td><strong>${escHtml(m.name)}</strong></td>
+        <td>${genderLbl}</td>
+        <td>${presentLbl}</td>
+        <td style="text-align:center;"><span class="total-badge ${m.setsCount > 0 ? 'nonzero' : ''}">${m.setsCount}</span></td>
+        <td>${costFmt}</td>
+        <td><span class="status-pill ${m.payment === 'unpaid' ? 'status-duplicate' : 'status-new'}">${paymentOpt.label}</span></td>
+      </tr>
+    `;
+  }).join('');
+  
+  // Close history modal, open detail modal
+  closeModal('history-modal-overlay');
+  openModal('detail-modal-overlay');
+}
+
+function deleteSession(id) {
+  if (!confirm('Bạn có chắc chắn muốn xóa buổi chơi này khỏi lịch sử không? Hành động này không thể phục hồi!')) return;
+  sessions = sessions.filter(x => x.id !== id);
+  save();
+  renderHistory();
+  showToast('🗑 Đã xóa lịch sử buổi chơi!', 'error');
+}
+
+// Bind detail / delete globally to let inline onclick work
+window.viewSessionDetail = viewSessionDetail;
+window.deleteSession = deleteSession;
+
 
 // ==================== STATS ====================
 function updateStats() {
@@ -556,6 +788,54 @@ function init() {
   document.getElementById('btn-quick-add').addEventListener('click', openQuickAddModal);
   document.getElementById('btn-add-member').addEventListener('click', () => openModal('modal-overlay'));
   document.getElementById('btn-reset').addEventListener('click', () => openModal('reset-modal-overlay'));
+  
+  // History and Sync buttons
+  document.getElementById('btn-history').addEventListener('click', () => {
+    openModal('history-modal-overlay');
+    renderHistory();
+  });
+  document.getElementById('btn-sync').addEventListener('click', () => {
+    const rawConfig = localStorage.getItem('bm_firebase_config') || '';
+    document.getElementById('sync-firebase-config').value = rawConfig;
+    openModal('sync-modal-overlay');
+  });
+
+  // sync modal
+  document.getElementById('sync-modal-close').addEventListener('click', () => closeModal('sync-modal-overlay'));
+  document.getElementById('sync-modal-cancel').addEventListener('click', () => closeModal('sync-modal-overlay'));
+  document.getElementById('sync-modal-save').addEventListener('click', () => {
+    const configVal = document.getElementById('sync-firebase-config').value.trim();
+    if (!configVal) {
+      localStorage.removeItem('bm_firebase_config');
+      initFirebase();
+      closeModal('sync-modal-overlay');
+      showToast('☁️ Đã gỡ bỏ cấu hình đồng bộ Đám mây!', 'info');
+      return;
+    }
+    try {
+      // test parsing
+      JSON.parse(configVal);
+      localStorage.setItem('bm_firebase_config', configVal);
+      initFirebase();
+      closeModal('sync-modal-overlay');
+    } catch(e) {
+      showToast('⚠️ Cấu hình không hợp lệ! Vui lòng nhập đúng định dạng JSON.', 'error');
+    }
+  });
+
+  // history modal
+  document.getElementById('history-modal-close').addEventListener('click', () => closeModal('history-modal-overlay'));
+  document.getElementById('history-modal-cancel').addEventListener('click', () => closeModal('history-modal-overlay'));
+
+  // detail modal
+  document.getElementById('detail-modal-close').addEventListener('click', () => {
+    closeModal('detail-modal-overlay');
+    openModal('history-modal-overlay');
+  });
+  document.getElementById('detail-modal-cancel').addEventListener('click', () => {
+    closeModal('detail-modal-overlay');
+    openModal('history-modal-overlay');
+  });
 
   // single-add modal
   document.getElementById('modal-close').addEventListener('click', () => closeModal('modal-overlay'));
@@ -585,14 +865,16 @@ function init() {
   document.getElementById('reset-modal-close').addEventListener('click', () => closeModal('reset-modal-overlay'));
   document.getElementById('reset-cancel').addEventListener('click', () => closeModal('reset-modal-overlay'));
   document.getElementById('reset-confirm').addEventListener('click', resetSession);
+  document.getElementById('reset-save-confirm').addEventListener('click', saveCurrentSession);
   document.getElementById('reset-clear-all').addEventListener('click', wipeAllMembers);
 
   // close modals on overlay click
-  ['modal-overlay', 'reset-modal-overlay', 'quick-modal-overlay'].forEach(id => {
+  ['modal-overlay', 'reset-modal-overlay', 'quick-modal-overlay', 'sync-modal-overlay', 'history-modal-overlay', 'detail-modal-overlay'].forEach(id => {
     document.getElementById(id).addEventListener('click', e => {
       if (e.target.id === id) closeModal(id);
     });
   });
+
 
   // Enter key in name field
   document.getElementById('input-name').addEventListener('keydown', e => {
