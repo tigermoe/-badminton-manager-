@@ -49,6 +49,24 @@ function uid() {
   return Math.random().toString(36).slice(2) + Date.now().toString(36);
 }
 
+function normalizeMembers() {
+  if (!Array.isArray(members)) return;
+  members.forEach(m => {
+    if (!m.sets) {
+      m.sets = [];
+    } else if (typeof m.sets === 'object' && !Array.isArray(m.sets)) {
+      const arr = [];
+      const max = m.maxSets || 6;
+      for (let i = 0; i < max; i++) {
+        arr[i] = !!m.sets[i];
+      }
+      m.sets = arr;
+    }
+  });
+}
+
+let syncTimeout = null;
+
 function initFirebase() {
   const rawConfig = localStorage.getItem('bm_firebase_config');
   if (rawConfig) {
@@ -70,14 +88,18 @@ function initFirebase() {
         db.ref('members').on('value', snapshot => {
           const data = snapshot.val();
           if (data) {
-            members = data;
-            renderTable();
+            // Only update and render if data is actually different to prevent local lag/overwriting
+            if (JSON.stringify(members) !== JSON.stringify(data)) {
+              members = data;
+              normalizeMembers();
+              renderTable();
+            }
           }
         });
         
         db.ref('priceMale').on('value', snapshot => {
           const val = snapshot.val();
-          if (val !== null) {
+          if (val !== null && priceMale !== val) {
             priceMale = val;
             const input = document.getElementById('price-male');
             if (input) input.value = priceMale;
@@ -87,7 +109,7 @@ function initFirebase() {
         
         db.ref('priceFemale').on('value', snapshot => {
           const val = snapshot.val();
-          if (val !== null) {
+          if (val !== null && priceFemale !== val) {
             priceFemale = val;
             const input = document.getElementById('price-female');
             if (input) input.value = priceFemale;
@@ -96,9 +118,11 @@ function initFirebase() {
         });
 
         db.ref('sessions').on('value', snapshot => {
-          const data = snapshot.val();
-          sessions = data || [];
-          renderHistory();
+          const data = snapshot.val() || [];
+          if (JSON.stringify(sessions) !== JSON.stringify(data)) {
+            sessions = data;
+            renderHistory();
+          }
         });
 
         showToast('☁️ Đã kết nối & Đồng bộ Đám mây Firebase!', 'success');
@@ -117,16 +141,22 @@ function initFirebase() {
 }
 
 function save() {
+  // Always save locally immediately for instant local UI responsiveness
   localStorage.setItem('bm_members', JSON.stringify(members));
   localStorage.setItem('bm_price_male', priceMale);
   localStorage.setItem('bm_price_female', priceFemale);
   localStorage.setItem('bm_sessions', JSON.stringify(sessions));
 
   if (db) {
-    db.ref('members').set(members);
-    db.ref('priceMale').set(priceMale);
-    db.ref('priceFemale').set(priceFemale);
-    db.ref('sessions').set(sessions);
+    // Debounce/Throttle Firebase writes to prevent saturating the network queue
+    if (syncTimeout) clearTimeout(syncTimeout);
+    
+    syncTimeout = setTimeout(() => {
+      db.ref('members').set(members);
+      db.ref('priceMale').set(priceMale);
+      db.ref('priceFemale').set(priceFemale);
+      db.ref('sessions').set(sessions);
+    }, 400); // 400ms debounce
   }
 }
 
@@ -134,7 +164,10 @@ function load() {
   // Try to load from firebase first (handled by listeners async), load local backup immediately
   try {
     const raw = localStorage.getItem('bm_members');
-    if (raw) { members = JSON.parse(raw); } else {
+    if (raw) { 
+      members = JSON.parse(raw); 
+      normalizeMembers();
+    } else {
       members = SEED_MEMBERS.map(m => ({ ...m, id: uid() }));
     }
     
@@ -383,10 +416,6 @@ function resetSession() {
 
 function saveCurrentSession() {
   const presentMembers = members.filter(m => m.present);
-  if (presentMembers.length === 0) {
-    showToast('⚠️ Không có thành viên nào đi điểm danh hôm nay, không thể lưu!', 'error');
-    return;
-  }
   
   const now = new Date();
   const days = ['Chủ Nhật','Thứ Hai','Thứ Ba','Thứ Tư','Thứ Năm','Thứ Sáu','Thứ Bảy'];
