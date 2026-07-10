@@ -78,10 +78,14 @@ function initFirebase() {
   const rawConfig = localStorage.getItem('bm_firebase_config');
   if (rawConfig) {
     try {
+      if (!window.firebase) {
+        showToast('⚠️ Chưa tải được thư viện Firebase. Kiểm tra kết nối mạng!', 'error');
+        return false;
+      }
       firebaseConfig = JSON.parse(rawConfig);
       if (firebaseConfig && firebaseConfig.apiKey) {
         // If there's an existing app, delete it first
-        if (window.firebase && firebase.apps.length > 0) {
+        if (firebase.apps.length > 0) {
           firebase.app().delete();
         }
         firebase.initializeApp(firebaseConfig);
@@ -91,7 +95,7 @@ function initFirebase() {
         const statusText = document.getElementById('sync-status-text');
         if (statusText) statusText.textContent = '🟢 Đã kết nối';
         
-        // 1. Synchronize Members
+        // 1. Synchronize Members with error handling
         db.ref('members').on('value', snapshot => {
           const data = snapshot.val();
           if (data !== null) {
@@ -106,11 +110,16 @@ function initFirebase() {
             }
           } else {
             // Firebase is empty, initialize it with local members list
-            db.ref('members').set(members);
+            db.ref('members').set(members, error => {
+              if (error) showToast('⚠️ Firebase: Lỗi ghi dữ liệu (Thành viên)!', 'error');
+            });
           }
+        }, error => {
+          console.error('Firebase Read Error (members):', error);
+          showToast('⚠️ Firebase: Bị từ chối quyền đọc dữ liệu!', 'error');
         });
         
-        // 2. Synchronize priceMale
+        // 2. Synchronize priceMale with error handling
         db.ref('priceMale').on('value', snapshot => {
           const val = snapshot.val();
           if (val !== null) {
@@ -121,11 +130,15 @@ function initFirebase() {
               updateStats();
             }
           } else {
-            db.ref('priceMale').set(priceMale);
+            db.ref('priceMale').set(priceMale, error => {
+              if (error) showToast('⚠️ Firebase: Lỗi ghi dữ liệu (Giá Nam)!', 'error');
+            });
           }
+        }, error => {
+          console.error('Firebase Read Error (priceMale):', error);
         });
         
-        // 3. Synchronize priceFemale
+        // 3. Synchronize priceFemale with error handling
         db.ref('priceFemale').on('value', snapshot => {
           const val = snapshot.val();
           if (val !== null) {
@@ -136,11 +149,15 @@ function initFirebase() {
               updateStats();
             }
           } else {
-            db.ref('priceFemale').set(priceFemale);
+            db.ref('priceFemale').set(priceFemale, error => {
+              if (error) showToast('⚠️ Firebase: Lỗi ghi dữ liệu (Giá Nữ)!', 'error');
+            });
           }
+        }, error => {
+          console.error('Firebase Read Error (priceFemale):', error);
         });
 
-        // 4. Synchronize Sessions (History)
+        // 4. Synchronize Sessions (History) with error handling
         db.ref('sessions').on('value', snapshot => {
           const data = snapshot.val();
           if (data !== null) {
@@ -153,11 +170,15 @@ function initFirebase() {
               renderHistory();
             }
           } else {
-            // Firebase has no sessions (empty history), initialize it with local sessions if they exist
             if (sessions.length > 0) {
-              db.ref('sessions').set(sessions);
+              db.ref('sessions').set(sessions, error => {
+                if (error) showToast('⚠️ Firebase: Lỗi ghi dữ liệu (Lịch sử)!', 'error');
+              });
             }
           }
+        }, error => {
+          console.error('Firebase Read Error (sessions):', error);
+          showToast('⚠️ Firebase: Quyền đọc lịch sử bị từ chối!', 'error');
         });
 
         showToast('☁️ Đã kết nối & Đồng bộ Đám mây Firebase!', 'success');
@@ -187,7 +208,9 @@ function save() {
     if (syncTimeout) clearTimeout(syncTimeout);
     
     syncTimeout = setTimeout(() => {
-      db.ref('members').set(members);
+      db.ref('members').set(members, error => {
+        if (error) showToast('⚠️ Firebase: Từ chối quyền ghi dữ liệu!', 'error');
+      });
       db.ref('priceMale').set(priceMale);
       db.ref('priceFemale').set(priceFemale);
       db.ref('sessions').set(sessions);
