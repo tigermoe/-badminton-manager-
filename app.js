@@ -50,7 +50,14 @@ function uid() {
 }
 
 function normalizeMembers() {
-  if (!Array.isArray(members)) return;
+  // If Firebase returned members as an object, convert it to an array
+  if (members && typeof members === 'object' && !Array.isArray(members)) {
+    members = Object.values(members);
+  }
+  if (!Array.isArray(members)) {
+    members = [];
+  }
+  
   members.forEach(m => {
     if (!m.sets) {
       m.sets = [];
@@ -88,12 +95,22 @@ function initFirebase() {
         db.ref('members').on('value', snapshot => {
           const data = snapshot.val();
           if (data) {
-            // Only update and render if data is actually different to prevent local lag/overwriting
-            if (JSON.stringify(members) !== JSON.stringify(data)) {
-              members = data;
+            // Save remote data
+            let remoteMembers = data;
+            if (remoteMembers && typeof remoteMembers === 'object' && !Array.isArray(remoteMembers)) {
+              remoteMembers = Object.values(remoteMembers);
+            }
+            if (JSON.stringify(members) !== JSON.stringify(remoteMembers)) {
+              members = remoteMembers;
               normalizeMembers();
               renderTable();
             }
+          } else {
+            // Database is empty (new setup), initialize it with local state
+            db.ref('members').set(members);
+            db.ref('priceMale').set(priceMale);
+            db.ref('priceFemale').set(priceFemale);
+            db.ref('sessions').set(sessions);
           }
         });
         
@@ -118,7 +135,10 @@ function initFirebase() {
         });
 
         db.ref('sessions').on('value', snapshot => {
-          const data = snapshot.val() || [];
+          let data = snapshot.val() || [];
+          if (data && typeof data === 'object' && !Array.isArray(data)) {
+            data = Object.values(data);
+          }
           if (JSON.stringify(sessions) !== JSON.stringify(data)) {
             sessions = data;
             renderHistory();
