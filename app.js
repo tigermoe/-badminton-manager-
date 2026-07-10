@@ -83,12 +83,28 @@ function initFirebase() {
         return false;
       }
       firebaseConfig = JSON.parse(rawConfig);
-      if (firebaseConfig && firebaseConfig.apiKey) {
+      if (!firebaseConfig || !firebaseConfig.apiKey) {
+        showToast('⚠️ Cấu hình thiếu apiKey!', 'error');
+        return false;
+      }
+      if (!firebaseConfig.databaseURL) {
+        showToast('⚠️ Thiếu "databaseURL"! Hãy tạo Realtime Database trong Firebase Console rồi dán lại cấu hình.', 'error');
+        return false;
+      }
+      // Trim spaces and remove trailing slash to prevent Firebase SDK format errors
+      firebaseConfig.databaseURL = firebaseConfig.databaseURL.trim().replace(/\/$/, "");
+      
+      try {
         // Initialize Firebase if not already initialized
         if (firebase.apps.length === 0) {
           firebase.initializeApp(firebaseConfig);
         }
         db = firebase.database();
+      } catch (err) {
+        console.error('Lỗi kết nối Firebase:', err);
+        showToast('⚠️ Lỗi khởi tạo Firebase: ' + err.message, 'error');
+        return false;
+      }
         
         // Listen to active connection state
         db.ref('.info/connected').on('value', snapshot => {
@@ -191,7 +207,6 @@ function initFirebase() {
         });
 
         return true;
-      }
     } catch (e) {
       console.error('Lỗi cấu hình Firebase:', e);
       showToast('⚠️ Lỗi cấu hình Firebase, chạy chế độ ngoại tuyến.', 'error');
@@ -910,14 +925,39 @@ function init() {
       setTimeout(() => location.reload(), 800);
       return;
     }
+    
+    let parsedConfig = null;
+    let cleaned = configVal;
+    
+    // Extract block between { and } if user pasted whole JS snippet
+    const startIdx = cleaned.indexOf('{');
+    const endIdx = cleaned.lastIndexOf('}');
+    if (startIdx !== -1 && endIdx !== -1 && endIdx > startIdx) {
+      cleaned = cleaned.substring(startIdx, endIdx + 1);
+    }
+    
     try {
-      // test parsing
-      JSON.parse(configVal);
-      localStorage.setItem('bm_firebase_config', configVal);
+      // Loose parse to support JS object literal syntax copied from Firebase Console
+      const fn = new Function('return (' + cleaned + ');');
+      parsedConfig = fn();
+    } catch(e) {
+      console.warn('Loose parse failed, attempting strict JSON parse', e);
+    }
+
+    if (!parsedConfig || typeof parsedConfig !== 'object') {
+      try {
+        parsedConfig = JSON.parse(configVal);
+      } catch(e) {
+        // both failed
+      }
+    }
+
+    if (parsedConfig && typeof parsedConfig === 'object') {
+      localStorage.setItem('bm_firebase_config', JSON.stringify(parsedConfig, null, 2));
       showToast('⚡ Cấu hình đã được lưu, đang kết nối lại...', 'success');
       setTimeout(() => location.reload(), 800);
-    } catch(e) {
-      showToast('⚠️ Cấu hình không hợp lệ! Vui lòng nhập đúng định dạng JSON.', 'error');
+    } else {
+      showToast('⚠️ Cấu hình không hợp lệ! Vui lòng sao chép đúng mã cấu hình từ Firebase Console.', 'error');
     }
   });
 

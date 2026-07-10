@@ -323,9 +323,20 @@
           <label for="sync-firebase-config">Cấu hình Firebase (JSON)</label>
           <textarea id="sync-firebase-config" class="form-control" style="font-family:monospace;font-size:0.8rem;min-height:160px;" rows="6" placeholder='{\n  "apiKey": "...",\n  "authDomain": "...",\n  "databaseURL": "...",\n  "projectId": "...",\n  "storageBucket": "...",\n  "messagingSenderId": "...",\n  "appId": "..."\n}'></textarea>
         </div>
-        <p style="font-size:0.75rem;color:var(--text-muted);">
+        <p style="font-size:0.75rem;color:var(--text-muted); margin-bottom: 12px;">
           Nếu chưa cấu hình, dữ liệu sẽ tự động được lưu offline trên trình duyệt của máy hiện tại.
         </p>
+        <div style="margin-top:12px; padding:12px; background:rgba(255,255,255,0.03); border-radius:8px; font-size:0.78rem; border:1px solid var(--border); line-height:1.5;">
+          <strong style="color:var(--yellow-400); display:block; margin-bottom:6px;">💡 Các bước thiết lập & Khắc phục lỗi kết nối:</strong>
+          <ol style="margin-left:16px; padding-left:0; color:var(--text-secondary); display:flex; flex-direction:column; gap:4px;">
+            <li>Vào <a href="https://console.firebase.google.com/" target="_blank" style="color:var(--blue-400); text-decoration:underline;">Firebase Console</a>, mở dự án của bạn.</li>
+            <li>Bắt buộc vào mục <strong>Build -> Realtime Database</strong> và bấm <strong>Tạo cơ sở dữ liệu (Create Database)</strong> thì mới có URL đồng bộ.</li>
+            <li>Vào tab <strong>Rules</strong> của Realtime Database, đổi luật thành công khai để chạy thử nghiệm:<br>
+              <code style="background:var(--bg-card); border:1px solid var(--border); padding:2px 6px; border-radius:4px; display:inline-block; margin-top:4px; font-family:monospace; color:var(--green-400); font-size:0.75rem;">{ ".read": true, ".write": true }</code>
+            </li>
+            <li>Copy mã cấu hình Web App ở cài đặt dự án (Project Settings) và dán vào ô trên. <strong>Lưu ý:</strong> JSON phải có trường <code style="color:var(--green-400)">"databaseURL"</code>.</li>
+          </ol>
+        </div>
       </div>
       <div class="modal-footer">
         <button class="btn btn-ghost" id="sync-modal-cancel">Hủy</button>
