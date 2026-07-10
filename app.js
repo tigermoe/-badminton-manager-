@@ -84,16 +84,25 @@ function initFirebase() {
       }
       firebaseConfig = JSON.parse(rawConfig);
       if (firebaseConfig && firebaseConfig.apiKey) {
-        // If there's an existing app, delete it first
-        if (firebase.apps.length > 0) {
-          firebase.app().delete();
+        // Initialize Firebase if not already initialized
+        if (firebase.apps.length === 0) {
+          firebase.initializeApp(firebaseConfig);
         }
-        firebase.initializeApp(firebaseConfig);
         db = firebase.database();
         
-        // Update UI status
-        const statusText = document.getElementById('sync-status-text');
-        if (statusText) statusText.textContent = '🟢 Đã kết nối';
+        // Listen to active connection state
+        db.ref('.info/connected').on('value', snapshot => {
+          const statusText = document.getElementById('sync-status-text');
+          if (statusText) {
+            if (snapshot.val() === true) {
+              statusText.textContent = '🟢 Đã kết nối';
+              statusText.style.color = 'var(--green-400)';
+            } else {
+              statusText.textContent = '🟡 Đang kết nối...';
+              statusText.style.color = 'var(--yellow-400)';
+            }
+          }
+        });
         
         // 1. Synchronize Members with error handling
         db.ref('members').on('value', snapshot => {
@@ -181,7 +190,6 @@ function initFirebase() {
           showToast('⚠️ Firebase: Quyền đọc lịch sử bị từ chối!', 'error');
         });
 
-        showToast('☁️ Đã kết nối & Đồng bộ Đám mây Firebase!', 'success');
         return true;
       }
     } catch (e) {
@@ -192,7 +200,10 @@ function initFirebase() {
   
   db = null;
   const statusText = document.getElementById('sync-status-text');
-  if (statusText) statusText.textContent = '☁️ Đồng bộ';
+  if (statusText) {
+    statusText.textContent = '☁️ Đồng bộ';
+    statusText.style.color = '';
+  }
   return false;
 }
 
@@ -895,18 +906,20 @@ function init() {
     const configVal = document.getElementById('sync-firebase-config').value.trim();
     if (!configVal) {
       localStorage.removeItem('bm_firebase_config');
-      initFirebase();
-      closeModal('sync-modal-overlay');
-      showToast('☁️ Đã gỡ bỏ cấu hình đồng bộ Đám mây!', 'info');
+      showToast('☁️ Đang tải lại để gỡ bỏ đồng bộ...', 'info');
+      setTimeout(() => location.reload(), 800);
       return;
     }
     try {
       // test parsing
       JSON.parse(configVal);
       localStorage.setItem('bm_firebase_config', configVal);
-      initFirebase();
-      closeModal('sync-modal-overlay');
+      showToast('⚡ Cấu hình đã được lưu, đang kết nối lại...', 'success');
+      setTimeout(() => location.reload(), 800);
     } catch(e) {
+      showToast('⚠️ Cấu hình không hợp lệ! Vui lòng nhập đúng định dạng JSON.', 'error');
+    }
+  });
       showToast('⚠️ Cấu hình không hợp lệ! Vui lòng nhập đúng định dạng JSON.', 'error');
     }
   });
