@@ -788,6 +788,7 @@ function init() {
   document.getElementById('btn-quick-add').addEventListener('click', openQuickAddModal);
   document.getElementById('btn-add-member').addEventListener('click', () => openModal('modal-overlay'));
   document.getElementById('btn-reset').addEventListener('click', () => openModal('reset-modal-overlay'));
+  document.getElementById('btn-save-session').addEventListener('click', saveCurrentSession);
   
   // History and Sync buttons
   document.getElementById('btn-history').addEventListener('click', () => {

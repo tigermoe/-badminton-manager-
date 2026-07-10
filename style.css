@@ -1115,7 +1115,7 @@ body {
 }
 
 @media (max-width: 900px) {
-  #btn-history span, #btn-sync span {
+  #btn-history span, #btn-sync span, #btn-save-session span {
     display: none;
   }
   #btn-history::before {
@@ -1123,6 +1123,9 @@ body {
   }
   #btn-sync::before {
     content: '☁️';
+  }
+  #btn-save-session::before {
+    content: '💾';
   }
 }
 
