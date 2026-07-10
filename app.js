@@ -91,11 +91,10 @@ function initFirebase() {
         const statusText = document.getElementById('sync-status-text');
         if (statusText) statusText.textContent = '🟢 Đã kết nối';
         
-        // Listeners for real-time sync
+        // 1. Synchronize Members
         db.ref('members').on('value', snapshot => {
           const data = snapshot.val();
-          if (data) {
-            // Save remote data
+          if (data !== null) {
             let remoteMembers = data;
             if (remoteMembers && typeof remoteMembers === 'object' && !Array.isArray(remoteMembers)) {
               remoteMembers = Object.values(remoteMembers);
@@ -106,42 +105,58 @@ function initFirebase() {
               renderTable();
             }
           } else {
-            // Database is empty (new setup), initialize it with local state
+            // Firebase is empty, initialize it with local members list
             db.ref('members').set(members);
-            db.ref('priceMale').set(priceMale);
-            db.ref('priceFemale').set(priceFemale);
-            db.ref('sessions').set(sessions);
           }
         });
         
+        // 2. Synchronize priceMale
         db.ref('priceMale').on('value', snapshot => {
           const val = snapshot.val();
-          if (val !== null && priceMale !== val) {
-            priceMale = val;
-            const input = document.getElementById('price-male');
-            if (input) input.value = priceMale;
-            updateStats();
+          if (val !== null) {
+            if (priceMale !== val) {
+              priceMale = val;
+              const input = document.getElementById('price-male');
+              if (input) input.value = priceMale;
+              updateStats();
+            }
+          } else {
+            db.ref('priceMale').set(priceMale);
           }
         });
         
+        // 3. Synchronize priceFemale
         db.ref('priceFemale').on('value', snapshot => {
           const val = snapshot.val();
-          if (val !== null && priceFemale !== val) {
-            priceFemale = val;
-            const input = document.getElementById('price-female');
-            if (input) input.value = priceFemale;
-            updateStats();
+          if (val !== null) {
+            if (priceFemale !== val) {
+              priceFemale = val;
+              const input = document.getElementById('price-female');
+              if (input) input.value = priceFemale;
+              updateStats();
+            }
+          } else {
+            db.ref('priceFemale').set(priceFemale);
           }
         });
 
+        // 4. Synchronize Sessions (History)
         db.ref('sessions').on('value', snapshot => {
-          let data = snapshot.val() || [];
-          if (data && typeof data === 'object' && !Array.isArray(data)) {
-            data = Object.values(data);
-          }
-          if (JSON.stringify(sessions) !== JSON.stringify(data)) {
-            sessions = data;
-            renderHistory();
+          const data = snapshot.val();
+          if (data !== null) {
+            let remoteSessions = data;
+            if (remoteSessions && typeof remoteSessions === 'object' && !Array.isArray(remoteSessions)) {
+              remoteSessions = Object.values(remoteSessions);
+            }
+            if (JSON.stringify(sessions) !== JSON.stringify(remoteSessions)) {
+              sessions = remoteSessions;
+              renderHistory();
+            }
+          } else {
+            // Firebase has no sessions (empty history), initialize it with local sessions if they exist
+            if (sessions.length > 0) {
+              db.ref('sessions').set(sessions);
+            }
           }
         });
 
