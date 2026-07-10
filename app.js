@@ -917,13 +917,6 @@ function init() {
       showToast('⚡ Cấu hình đã được lưu, đang kết nối lại...', 'success');
       setTimeout(() => location.reload(), 800);
     } catch(e) {
-      showToast('⚠️ Cấu hình không hợp lệ! Vui lòng nhập đúng định dạng JSON.', 'error');
-    }
-  });
-      showToast('⚠️ Cấu hình không hợp lệ! Vui lòng nhập đúng định dạng JSON.', 'error');
-    }
-  });
-
   // history modal
   document.getElementById('history-modal-close').addEventListener('click', () => closeModal('history-modal-overlay'));
   document.getElementById('history-modal-cancel').addEventListener('click', () => closeModal('history-modal-overlay'));
