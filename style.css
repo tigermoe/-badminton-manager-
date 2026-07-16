@@ -414,6 +414,7 @@ body {
   letter-spacing: .02em;
 }
 .badge-beginner  { background: rgba(74,222,128,.15); color: var(--green-400); border: 1px solid rgba(74,222,128,.3); }
+.badge-yellow    { background: rgba(250,204,21,.15); color: var(--yellow-400); border: 1px solid rgba(250,204,21,.3); }
 .badge-medium    { background: rgba(96,165,250,.15); color: var(--blue-400);  border: 1px solid rgba(96,165,250,.3); }
 .badge-good      { background: rgba(251,146,60,.15); color: var(--orange-400);border: 1px solid rgba(251,146,60,.3); }
 .badge-excellent { background: rgba(248,113,113,.15); color: var(--red-400);  border: 1px solid rgba(248,113,113,.3); }
@@ -1062,6 +1063,7 @@ body {
 .level-select:focus { border-color: var(--green-500); }
 .level-select.level-yeu      { color: var(--green-400);  border-color: rgba(74,222,128,.4); }
 .level-select.level-yeu_plus { color: var(--green-400);  border-color: rgba(74,222,128,.4); }
+.level-select.level-tby      { color: var(--yellow-400); border-color: rgba(250,204,21,.4); }
 .level-select.level-tb_minus { color: var(--blue-400);   border-color: rgba(96,165,250,.4); }
 .level-select.level-tb       { color: var(--orange-400); border-color: rgba(251,146,60,.4); }
 

@@ -10,6 +10,7 @@
 const LEVELS = {
   yeu:      { label: '🟢 Yếu', cls: 'badge-beginner' },
   yeu_plus: { label: '🟢 Yếu+', cls: 'badge-beginner' },
+  tby:      { label: '🟡 TBY', cls: 'badge-yellow' },
   tb_minus: { label: '🔵 TB-', cls: 'badge-medium' },
   tb:       { label: '🟠 TB',  cls: 'badge-good' },
 };
