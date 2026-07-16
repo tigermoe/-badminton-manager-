@@ -158,7 +158,7 @@ function initFirebase() {
         db.ref('priceMale').on('value', snapshot => {
           if (syncTimeout) return;
           const val = snapshot.val();
-          const targetVal = val !== null ? val : 60000;
+          const targetVal = val !== null ? parseInt(val) || 60000 : 60000;
           if (priceMale !== targetVal) {
             priceMale = targetVal;
             const input = document.getElementById('price-male');
@@ -173,7 +173,7 @@ function initFirebase() {
         db.ref('priceFemale').on('value', snapshot => {
           if (syncTimeout) return;
           const val = snapshot.val();
-          const targetVal = val !== null ? val : 40000;
+          const targetVal = val !== null ? parseInt(val) || 40000 : 40000;
           if (priceFemale !== targetVal) {
             priceFemale = targetVal;
             const input = document.getElementById('price-female');
@@ -335,7 +335,7 @@ function rowHTML(m) {
   // calculate price for this person
   let cost = 0;
   if (m.present) {
-    cost = m.gender === 'nu' ? priceFemale : priceMale;
+    cost = m.gender === 'nu' ? (parseInt(priceFemale) || 40000) : (parseInt(priceMale) || 60000);
   }
   const costFmt = cost > 0 ? `${cost.toLocaleString('vi-VN')}đ` : '0đ';
 
@@ -552,12 +552,23 @@ function saveCurrentSession() {
   let expected = 0;
   let collected = 0;
   let unpaid = 0;
+  
+  // Calculate totalSets as the maximum ticked set number across all members
   let totalSets = 0;
+  members.forEach(m => {
+    const memberMaxSet = (m.sets || []).reduce((mMax, val, idx) => val ? idx + 1 : mMax, 0);
+    if (memberMaxSet > totalSets) {
+      totalSets = memberMaxSet;
+    }
+  });
+  
+  const pMale = parseInt(priceMale) || 60000;
+  const pFemale = parseInt(priceFemale) || 40000;
   
   const sessionMembers = members.map(m => {
     let fee = 0;
     if (m.present) {
-      fee = m.gender === 'nu' ? priceFemale : priceMale;
+      fee = m.gender === 'nu' ? pFemale : pMale;
       expected += fee;
       if (m.payment === 'unpaid') {
         unpaid += fee;
@@ -566,7 +577,6 @@ function saveCurrentSession() {
       }
     }
     const setsCount = (m.sets || []).filter(Boolean).length;
-    totalSets += setsCount;
     
     return {
       name: m.name,
@@ -693,7 +703,10 @@ window.deleteSession = deleteSession;
 function updateStats() {
   const total   = members.length;
   const present = members.filter(m => m.present).length;
-  const sets    = members.reduce((s, m) => s + (m.sets || []).filter(Boolean).length, 0);
+  const sets = members.reduce((max, m) => {
+    const memberMaxSet = (m.sets || []).reduce((mMax, val, idx) => val ? idx + 1 : mMax, 0);
+    return Math.max(max, memberMaxSet);
+  }, 0);
   const unpaidCount  = members.filter(m => m.payment === 'unpaid' && m.present).length;
 
   document.getElementById('stat-total-val').textContent   = total;
@@ -709,10 +722,12 @@ function updateStats() {
   let totalExpected = 0;
   let totalCollected = 0;
   let totalUnpaid = 0;
+  const pMale = parseInt(priceMale) || 60000;
+  const pFemale = parseInt(priceFemale) || 40000;
 
   members.forEach(m => {
     if (!m.present) return;
-    const fee = m.gender === 'nu' ? priceFemale : priceMale;
+    const fee = m.gender === 'nu' ? pFemale : pMale;
     totalExpected += fee;
     if (m.payment === 'unpaid') {
       totalUnpaid += fee;
