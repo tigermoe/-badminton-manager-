@@ -120,24 +120,32 @@ function initFirebase() {
           }
         });
         
+        // Check database initialization
+        db.ref('initialized').once('value', snapshot => {
+          if (snapshot.val() !== true) {
+            // First time setup: Upload current local state
+            db.ref('initialized').set(true);
+            db.ref('members').set(members);
+            db.ref('priceMale').set(priceMale);
+            db.ref('priceFemale').set(priceFemale);
+            db.ref('sessions').set(sessions);
+          }
+        });
+
         // 1. Synchronize Members with error handling
         db.ref('members').on('value', snapshot => {
           const data = snapshot.val();
+          let remoteMembers = [];
           if (data !== null) {
-            let remoteMembers = data;
+            remoteMembers = data;
             if (remoteMembers && typeof remoteMembers === 'object' && !Array.isArray(remoteMembers)) {
               remoteMembers = Object.values(remoteMembers);
             }
-            if (JSON.stringify(members) !== JSON.stringify(remoteMembers)) {
-              members = remoteMembers;
-              normalizeMembers();
-              renderTable();
-            }
-          } else {
-            // Firebase is empty, initialize it with local members list
-            db.ref('members').set(members, error => {
-              if (error) showToast('⚠️ Firebase: Lỗi ghi dữ liệu (Thành viên)!', 'error');
-            });
+          }
+          if (JSON.stringify(members) !== JSON.stringify(remoteMembers)) {
+            members = remoteMembers;
+            normalizeMembers();
+            renderTable();
           }
         }, error => {
           console.error('Firebase Read Error (members):', error);
@@ -147,17 +155,12 @@ function initFirebase() {
         // 2. Synchronize priceMale with error handling
         db.ref('priceMale').on('value', snapshot => {
           const val = snapshot.val();
-          if (val !== null) {
-            if (priceMale !== val) {
-              priceMale = val;
-              const input = document.getElementById('price-male');
-              if (input) input.value = priceMale;
-              updateStats();
-            }
-          } else {
-            db.ref('priceMale').set(priceMale, error => {
-              if (error) showToast('⚠️ Firebase: Lỗi ghi dữ liệu (Giá Nam)!', 'error');
-            });
+          const targetVal = val !== null ? val : 60000;
+          if (priceMale !== targetVal) {
+            priceMale = targetVal;
+            const input = document.getElementById('price-male');
+            if (input) input.value = priceMale;
+            updateStats();
           }
         }, error => {
           console.error('Firebase Read Error (priceMale):', error);
@@ -166,17 +169,12 @@ function initFirebase() {
         // 3. Synchronize priceFemale with error handling
         db.ref('priceFemale').on('value', snapshot => {
           const val = snapshot.val();
-          if (val !== null) {
-            if (priceFemale !== val) {
-              priceFemale = val;
-              const input = document.getElementById('price-female');
-              if (input) input.value = priceFemale;
-              updateStats();
-            }
-          } else {
-            db.ref('priceFemale').set(priceFemale, error => {
-              if (error) showToast('⚠️ Firebase: Lỗi ghi dữ liệu (Giá Nữ)!', 'error');
-            });
+          const targetVal = val !== null ? val : 40000;
+          if (priceFemale !== targetVal) {
+            priceFemale = targetVal;
+            const input = document.getElementById('price-female');
+            if (input) input.value = priceFemale;
+            updateStats();
           }
         }, error => {
           console.error('Firebase Read Error (priceFemale):', error);
@@ -185,21 +183,16 @@ function initFirebase() {
         // 4. Synchronize Sessions (History) with error handling
         db.ref('sessions').on('value', snapshot => {
           const data = snapshot.val();
+          let remoteSessions = [];
           if (data !== null) {
-            let remoteSessions = data;
+            remoteSessions = data;
             if (remoteSessions && typeof remoteSessions === 'object' && !Array.isArray(remoteSessions)) {
               remoteSessions = Object.values(remoteSessions);
             }
-            if (JSON.stringify(sessions) !== JSON.stringify(remoteSessions)) {
-              sessions = remoteSessions;
-              renderHistory();
-            }
-          } else {
-            if (sessions.length > 0) {
-              db.ref('sessions').set(sessions, error => {
-                if (error) showToast('⚠️ Firebase: Lỗi ghi dữ liệu (Lịch sử)!', 'error');
-              });
-            }
+          }
+          if (JSON.stringify(sessions) !== JSON.stringify(remoteSessions)) {
+            sessions = remoteSessions;
+            renderHistory();
           }
         }, error => {
           console.error('Firebase Read Error (sessions):', error);
@@ -222,7 +215,7 @@ function initFirebase() {
   return false;
 }
 
-function save() {
+function save(immediate = false) {
   // Always save locally immediately for instant local UI responsiveness
   localStorage.setItem('bm_members', JSON.stringify(members));
   localStorage.setItem('bm_price_male', priceMale);
@@ -230,18 +223,35 @@ function save() {
   localStorage.setItem('bm_sessions', JSON.stringify(sessions));
 
   if (db) {
-    // Debounce/Throttle Firebase writes to prevent saturating the network queue
     if (syncTimeout) clearTimeout(syncTimeout);
     
-    syncTimeout = setTimeout(() => {
-      db.ref('members').set(members, error => {
-        if (error) showToast('⚠️ Firebase: Từ chối quyền ghi dữ liệu!', 'error');
+    const writeFn = () => {
+      const p1 = db.ref('members').set(members).catch(error => {
+        showToast('⚠️ Firebase: Lỗi ghi dữ liệu (Thành viên)!', 'error');
+        throw error;
       });
-      db.ref('priceMale').set(priceMale);
-      db.ref('priceFemale').set(priceFemale);
-      db.ref('sessions').set(sessions);
-    }, 400); // 400ms debounce
+      const p2 = db.ref('priceMale').set(priceMale).catch(error => {
+        showToast('⚠️ Firebase: Lỗi ghi dữ liệu (Giá Nam)!', 'error');
+        throw error;
+      });
+      const p3 = db.ref('priceFemale').set(priceFemale).catch(error => {
+        showToast('⚠️ Firebase: Lỗi ghi dữ liệu (Giá Nữ)!', 'error');
+        throw error;
+      });
+      const p4 = db.ref('sessions').set(sessions).catch(error => {
+        showToast('⚠️ Firebase: Lỗi ghi dữ liệu (Lịch sử)!', 'error');
+        throw error;
+      });
+      return Promise.all([p1, p2, p3, p4]);
+    };
+
+    if (immediate) {
+      return writeFn();
+    } else {
+      syncTimeout = setTimeout(writeFn, 400); // 400ms debounce
+    }
   }
+  return Promise.resolve();
 }
 
 function load() {
@@ -577,17 +587,22 @@ function saveCurrentSession() {
   
   sessions.unshift(newSession); // Put newest session first
   
-  // Reset the current session members' state (just like normal reset)
-  members.forEach(m => {
-    m.present = false;
-    m.sets = [];
-    m.payment = 'unpaid';
-  });
+  // Clear the active roster for the new session
+  members = [];
   
-  save();
-  renderTable();
-  closeModal('reset-modal-overlay');
-  showToast('💾 Đã lưu lịch sử buổi chơi và làm mới thành công!', 'success');
+  showToast('💾 Đang lưu và đồng bộ lên đám mây...', 'info');
+  
+  save(true)
+    .then(() => {
+      renderTable();
+      renderHistory();
+      closeModal('reset-modal-overlay');
+      showToast('💾 Đã lưu lịch sử buổi chơi và làm mới danh sách!', 'success');
+    })
+    .catch(err => {
+      console.error('Lỗi khi lưu buổi chơi:', err);
+      showToast('⚠️ Không thể lưu lên đám mây. Vui lòng kiểm tra kết nối mạng!', 'error');
+    });
 }
 
 function renderHistory() {
@@ -893,12 +908,26 @@ function setDate() {
 
 // ==================== WIPE DATABASE ====================
 function wipeAllMembers() {
-  if (!confirm('🚨 CẢNH BÁO: Bạn có chắc chắn muốn xoá sạch hoàn toàn danh sách người chơi khỏi hệ thống? Hành động này không thể hoàn tác!')) return;
+  if (!confirm('🚨 CẢNH BÁO: Bạn có chắc chắn muốn xoá sạch hoàn toàn danh sách người chơi và lịch sử khỏi hệ thống? Hành động này không thể hoàn tác!')) return;
   members = [];
-  save();
-  renderTable();
-  closeModal('reset-modal-overlay');
-  showToast('🗑️ Đã xoá sạch toàn bộ người chơi!', 'error');
+  sessions = [];
+  
+  showToast('⏳ Đang xóa dữ liệu trên đám mây...', 'info');
+  
+  save(true)
+    .then(() => {
+      renderTable();
+      renderHistory();
+      closeModal('reset-modal-overlay');
+      showToast('🗑️ Đã xoá sạch toàn bộ dữ liệu! Đang tải lại...', 'success');
+      setTimeout(() => {
+        location.reload();
+      }, 1000);
+    })
+    .catch(err => {
+      console.error('Lỗi khi xoá dữ liệu:', err);
+      showToast('⚠️ Không thể xóa sạch dữ liệu trên đám mây. Vui lòng kiểm tra kết nối mạng!', 'error');
+    });
 }
 
 // ==================== INIT ====================
