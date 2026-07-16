@@ -135,6 +135,7 @@ function initFirebase() {
 
         // 1. Synchronize Members with error handling
         db.ref('members').on('value', snapshot => {
+          if (syncTimeout) return;
           const data = snapshot.val();
           let remoteMembers = [];
           if (data !== null) {
@@ -155,6 +156,7 @@ function initFirebase() {
         
         // 2. Synchronize priceMale with error handling
         db.ref('priceMale').on('value', snapshot => {
+          if (syncTimeout) return;
           const val = snapshot.val();
           const targetVal = val !== null ? val : 60000;
           if (priceMale !== targetVal) {
@@ -169,6 +171,7 @@ function initFirebase() {
         
         // 3. Synchronize priceFemale with error handling
         db.ref('priceFemale').on('value', snapshot => {
+          if (syncTimeout) return;
           const val = snapshot.val();
           const targetVal = val !== null ? val : 40000;
           if (priceFemale !== targetVal) {
@@ -183,6 +186,7 @@ function initFirebase() {
 
         // 4. Synchronize Sessions (History) with error handling
         db.ref('sessions').on('value', snapshot => {
+          if (syncTimeout) return;
           const data = snapshot.val();
           let remoteSessions = [];
           if (data !== null) {
@@ -227,6 +231,7 @@ function save(immediate = false) {
     if (syncTimeout) clearTimeout(syncTimeout);
     
     const writeFn = () => {
+      syncTimeout = null; // Reset timeout reference when executed
       const p1 = db.ref('members').set(members).catch(error => {
         showToast('⚠️ Firebase: Lỗi ghi dữ liệu (Thành viên)!', 'error');
         throw error;
