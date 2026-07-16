@@ -519,15 +519,20 @@ function deleteMember(id) {
 }
 
 function resetSession() {
-  members.forEach(m => {
-    m.present = false;
-    m.sets = [];
-    m.payment = 'unpaid';
-  });
-  save();
-  renderTable();
-  closeModal('reset-modal-overlay');
-  showToast('🔄 Đã làm mới buổi chơi!', 'info');
+  members = [];
+  
+  showToast('⏳ Đang làm mới...', 'info');
+  
+  save(true)
+    .then(() => {
+      renderTable();
+      closeModal('reset-modal-overlay');
+      showToast('🔄 Đã làm mới buổi chơi (xoá sạch thành viên)!', 'success');
+    })
+    .catch(err => {
+      console.error('Lỗi khi làm mới buổi chơi:', err);
+      showToast('⚠️ Không thể kết nối Firebase để làm mới.', 'error');
+    });
 }
 
 function saveCurrentSession() {
