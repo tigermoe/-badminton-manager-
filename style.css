@@ -1043,6 +1043,28 @@ body {
 .gender-select.gender-nam { color: var(--blue-400); border-color: rgba(96,165,250,.4); }
 .gender-select.gender-nu { color: var(--orange-400); border-color: rgba(251,146,60,.4); }
 
+/* Level display select in table */
+.level-select {
+  appearance: none;
+  -webkit-appearance: none;
+  background: var(--bg-card2);
+  border: 1.5px solid var(--border);
+  border-radius: var(--r-md);
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: .8rem;
+  font-weight: 600;
+  padding: 6px 10px;
+  cursor: pointer;
+  outline: none;
+  transition: border-color .15s;
+}
+.level-select:focus { border-color: var(--green-500); }
+.level-select.level-yeu      { color: var(--green-400);  border-color: rgba(74,222,128,.4); }
+.level-select.level-yeu_plus { color: var(--green-400);  border-color: rgba(74,222,128,.4); }
+.level-select.level-tb_minus { color: var(--blue-400);   border-color: rgba(96,165,250,.4); }
+.level-select.level-tb       { color: var(--orange-400); border-color: rgba(251,146,60,.4); }
+
 /* Gender Radio Button group */
 .gender-radio-group {
   display: flex;

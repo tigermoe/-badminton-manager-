@@ -310,11 +310,11 @@ function renderTable() {
 }
 
 function rowHTML(m) {
-  const level = LEVELS[m.level] || LEVELS.tb_minus;
   const payment = PAYMENT_OPTIONS[m.payment] || PAYMENT_OPTIONS.unpaid;
   const total = m.sets.filter(Boolean).length;
   const genderLbl = m.gender === 'nu' ? '👩 Nữ' : '👨 Nam';
   const genderCls = m.gender === 'nu' ? 'gender-nu' : 'gender-nam';
+  const levelCls = `level-${m.level}`;
 
   // calculate price for this person
   let cost = 0;
@@ -333,6 +333,10 @@ function rowHTML(m) {
     `<option value="${k}" ${m.payment === k ? 'selected' : ''}>${v.label}</option>`
   ).join('');
 
+  const levelOpts = Object.entries(LEVELS).map(([k, v]) =>
+    `<option value="${k}" ${m.level === k ? 'selected' : ''}>${v.label}</option>`
+  ).join('');
+
   return `
     <tr data-id="${m.id}" class="${m.present ? 'present' : ''}">
       <td><span class="member-name">${escHtml(m.name)}</span></td>
@@ -342,7 +346,11 @@ function rowHTML(m) {
           <option value="nu" ${m.gender === 'nu' ? 'selected' : ''}>👩 Nữ</option>
         </select>
       </td>
-      <td><span class="badge ${level.cls}">${level.label}</span></td>
+      <td>
+        <select class="level-select ${levelCls}" data-id="${m.id}" aria-label="Trình độ">
+          ${levelOpts}
+        </select>
+      </td>
       <td style="text-align:center;">
         <button class="attend-btn ${m.present ? 'on' : ''}" 
                 data-id="${m.id}" 
@@ -411,6 +419,11 @@ function attachRowListeners(list) {
     sel.addEventListener('change', () => changeGender(sel.dataset.id, sel.value));
   });
 
+  // level select
+  document.querySelectorAll('.level-select').forEach(sel => {
+    sel.addEventListener('change', () => changeLevel(sel.dataset.id, sel.value));
+  });
+
   // delete
   document.querySelectorAll('.delete-btn').forEach(btn => {
     btn.addEventListener('click', () => deleteMember(btn.dataset.id));
@@ -474,6 +487,15 @@ function changeGender(id, value) {
   save();
   renderTable();
   showToast(`👨👩 ${m.name}: Giới tính ${value === 'nu' ? 'Nữ' : 'Nam'}`, 'info');
+}
+
+function changeLevel(id, value) {
+  const m = members.find(x => x.id === id);
+  if (!m) return;
+  m.level = value;
+  save();
+  renderTable();
+  showToast(`🟢🔵🟠 ${m.name}: Trình độ ${LEVELS[value]?.label}`, 'info');
 }
 
 function deleteMember(id) {
