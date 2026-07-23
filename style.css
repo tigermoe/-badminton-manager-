@@ -984,6 +984,15 @@ body {
   transition: border-color .15s;
   text-align: right;
 }
+.cost-input::-webkit-outer-spin-button,
+.cost-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+.cost-input {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
 .cost-input:focus { border-color: var(--green-500); }
 
 .cost-summary {
