@@ -158,11 +158,12 @@ function initFirebase() {
         db.ref('priceMale').on('value', snapshot => {
           if (syncTimeout) return;
           const val = snapshot.val();
-          const targetVal = val !== null ? parseInt(val) || 60000 : 60000;
+          const parsed = parseInt(val);
+          const targetVal = (val !== null && !isNaN(parsed)) ? parsed : 60000;
           if (priceMale !== targetVal) {
             priceMale = targetVal;
             const input = document.getElementById('price-male');
-            if (input) input.value = priceMale;
+            if (input && document.activeElement !== input) input.value = priceMale;
             updateStats();
           }
         }, error => {
@@ -173,11 +174,12 @@ function initFirebase() {
         db.ref('priceFemale').on('value', snapshot => {
           if (syncTimeout) return;
           const val = snapshot.val();
-          const targetVal = val !== null ? parseInt(val) || 40000 : 40000;
+          const parsed = parseInt(val);
+          const targetVal = (val !== null && !isNaN(parsed)) ? parsed : 40000;
           if (priceFemale !== targetVal) {
             priceFemale = targetVal;
             const input = document.getElementById('price-female');
-            if (input) input.value = priceFemale;
+            if (input && document.activeElement !== input) input.value = priceFemale;
             updateStats();
           }
         }, error => {
@@ -286,9 +288,9 @@ function load() {
 
   try {
     const pm = localStorage.getItem('bm_price_male');
-    if (pm) priceMale = parseInt(pm) || 60000;
+    if (pm !== null && !isNaN(parseInt(pm))) priceMale = parseInt(pm);
     const pf = localStorage.getItem('bm_price_female');
-    if (pf) priceFemale = parseInt(pf) || 40000;
+    if (pf !== null && !isNaN(parseInt(pf))) priceFemale = parseInt(pf);
   } catch(e) {}
   
   // Initialize firebase configs and connection
@@ -335,7 +337,9 @@ function rowHTML(m) {
   // calculate price for this person
   let cost = 0;
   if (m.present) {
-    cost = m.gender === 'nu' ? (parseInt(priceFemale) || 40000) : (parseInt(priceMale) || 60000);
+    const pMale = isNaN(parseInt(priceMale)) ? 60000 : parseInt(priceMale);
+    const pFemale = isNaN(parseInt(priceFemale)) ? 40000 : parseInt(priceFemale);
+    cost = m.gender === 'nu' ? pFemale : pMale;
   }
   const costFmt = cost > 0 ? `${cost.toLocaleString('vi-VN')}đ` : '0đ';
 
@@ -562,8 +566,8 @@ function saveCurrentSession() {
     }
   });
   
-  const pMale = parseInt(priceMale) || 60000;
-  const pFemale = parseInt(priceFemale) || 40000;
+  const pMale = isNaN(parseInt(priceMale)) ? 60000 : parseInt(priceMale);
+  const pFemale = isNaN(parseInt(priceFemale)) ? 40000 : parseInt(priceFemale);
   
   const sessionMembers = members.map(m => {
     let fee = 0;
@@ -722,8 +726,8 @@ function updateStats() {
   let totalExpected = 0;
   let totalCollected = 0;
   let totalUnpaid = 0;
-  const pMale = parseInt(priceMale) || 60000;
-  const pFemale = parseInt(priceFemale) || 40000;
+  const pMale = isNaN(parseInt(priceMale)) ? 60000 : parseInt(priceMale);
+  const pFemale = isNaN(parseInt(priceFemale)) ? 40000 : parseInt(priceFemale);
 
   members.forEach(m => {
     if (!m.present) return;
@@ -740,9 +744,15 @@ function updateStats() {
   document.getElementById('cash-collected').textContent = `${totalCollected.toLocaleString('vi-VN')}đ`;
   document.getElementById('cash-unpaid').textContent = `${totalUnpaid.toLocaleString('vi-VN')}đ`;
 
-  // Update inputs
-  document.getElementById('price-male').value = priceMale;
-  document.getElementById('price-female').value = priceFemale;
+  // Update inputs only if user is not currently actively typing in them
+  const maleInput = document.getElementById('price-male');
+  if (maleInput && document.activeElement !== maleInput) {
+    maleInput.value = priceMale;
+  }
+  const femaleInput = document.getElementById('price-female');
+  if (femaleInput && document.activeElement !== femaleInput) {
+    femaleInput.value = priceFemale;
+  }
 }
 
 // ==================== MODAL ====================
@@ -963,16 +973,32 @@ function init() {
   renderTable();
 
   // Price inputs change
-  document.getElementById('price-male').addEventListener('input', e => {
-    priceMale = parseInt(e.target.value) || 0;
-    save();
-    renderTable();
-  });
-  document.getElementById('price-female').addEventListener('input', e => {
-    priceFemale = parseInt(e.target.value) || 0;
-    save();
-    renderTable();
-  });
+  const priceMaleEl = document.getElementById('price-male');
+  const priceFemaleEl = document.getElementById('price-female');
+
+  if (priceMaleEl) {
+    priceMaleEl.addEventListener('input', e => {
+      const val = parseInt(e.target.value);
+      priceMale = isNaN(val) ? 0 : val;
+      save();
+      renderTable();
+    });
+    priceMaleEl.addEventListener('blur', e => {
+      e.target.value = priceMale;
+    });
+  }
+
+  if (priceFemaleEl) {
+    priceFemaleEl.addEventListener('input', e => {
+      const val = parseInt(e.target.value);
+      priceFemale = isNaN(val) ? 0 : val;
+      save();
+      renderTable();
+    });
+    priceFemaleEl.addEventListener('blur', e => {
+      e.target.value = priceFemale;
+    });
+  }
 
   // header buttons
   document.getElementById('btn-quick-add').addEventListener('click', openQuickAddModal);
